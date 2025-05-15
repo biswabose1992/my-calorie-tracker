@@ -1,11 +1,13 @@
+/* index.css */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
+  /* Keeping original color for root, but background will be handled by body/App */
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Removed background-color here */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -24,11 +26,23 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  /* Removed display: flex and place-items: center */
+  /* Keep min-width and min-height for basic viewport coverage */
   min-width: 320px;
   min-height: 100vh;
+  /* Set background color here, will be covered by App's gradient */
+  background-color: #ffffff;
 }
+
+/* Removed ALL #root styles from here */
+/*
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+*/
 
 h1 {
   font-size: 3.2em;
@@ -57,7 +71,8 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    /* Allow body background to take precedence */
+    /* Removed background-color here */
   }
   a:hover {
     color: #747bff;
