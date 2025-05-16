@@ -1,13 +1,21 @@
 /* index.css */
+/*
+  This file provides basic global styles.
+  Most styling is handled by Tailwind CSS classes in App.tsx.
+  Dark mode specific styles have been removed to maintain a single view.
+*/
+
 :root {
+  /* Set the color scheme based on light mode */
+  color-scheme: light;
+
+  /* Default text color */
+  color: #213547; /* A dark gray for text */
+
+  /* Basic font settings */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  /* Default text color in light mode */
-  color: #213547; /* A dark gray for light mode text */
-  /* Removed background-color here */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -20,6 +28,7 @@ a {
   color: #646cff;
   text-decoration: inherit;
 }
+
 a:hover {
   color: #535bf2;
 }
@@ -30,118 +39,21 @@ body {
   min-width: 320px;
   min-height: 100vh;
   /* Set background color for the body */
-  background-color: #ffffff; /* White background for the body in light mode */
+  background-color: #ffffff; /* White background for the body */
 }
 
-/* Removed ALL #root styles from here */
+/*
+  Removed ALL @media (prefers-color-scheme: dark) block
+  to ensure a consistent view in both modes.
+*/
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+/*
+  Removed ALL #root styles from here.
+  The App component's outer div handles layout and centering
+  using Tailwind classes like 'mx-auto', 'flex', 'items-center', etc.
+*/
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a; /* Default button background */
-  color: rgba(255, 255, 255, 0.87); /* Default button text color */
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-/* Styles for dark mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Text color in dark mode for elements outside main content/modal */
-    color: rgba(255, 255, 255, 0.87); /* A light color for dark mode text */
-    /* Removed background-color here */
-  }
-
-  body {
-    /* Background color for the body in dark mode */
-    background-color: #1a1a1a; /* A dark background for the body */
-  }
-
-  a:hover {
-    color: #747bff;
-  }
-
-  button {
-    background-color: #f9f9f9; /* Lighter background for buttons in dark mode */
-    color: #213547; /* Darker text for buttons in dark mode */
-  }
-
-  /* --- Dark Mode Text Color Fix for White Background Areas --- */
-  /* Target text within the main content area and the modal content */
-  /* These areas have bg-white in App.tsx, so text needs to be dark in dark mode */
-
-  /* More specific rules to ensure general text is dark */
-  main *, /* Target all elements within main */
-  .fixed.inset-0 > div * /* Target all elements within the modal content */
-  {
-    /* Set a dark text color for most elements */
-    color: #333333 !important; /* A dark gray */
-  }
-
-  /* Re-apply specific colors for elements that should retain them, but make them dark-mode friendly */
-  main h1,
-  main h2,
-  main h3,
-  .fixed.inset-0 > div h2 {
-     color: #1a1a1a !important; /* Even darker for headings */
-  }
-
-  /* --- Specific Fix for Input Field Text and Placeholders in Dark Mode --- */
-  /* Target input, select, and textarea elements within the main content and modal */
-  main input[type="text"],
-  main input[type="number"],
-  main select,
-  main textarea,
-  .fixed.inset-0 > div input[type="text"],
-  .fixed.inset-0 > div input[type="number"],
-  .fixed.inset-0 > div select,
-  .fixed.inset-0 > div textarea
-  {
-      /* Set text color to a light gray for better contrast with dark input background */
-      color: #eeeeee !important; /* Very light gray */
-      /* Explicitly set a dark background for inputs in dark mode */
-      background-color: #444444 !important; /* Darker background */
-      border-color: #666666 !important; /* Slightly lighter border */
-  }
-
-  /* Target placeholder text specifically with higher specificity */
-  main input[type="text"]::placeholder,
-  main input[type="number"]::placeholder,
-  main textarea::placeholder,
-  .fixed.inset-0 > div input[type="text"]::placeholder,
-  .fixed.inset-0 > div input[type="number"]::placeholder,
-  .fixed.inset-0 > div textarea::placeholder {
-      /* Set placeholder color to a medium light gray */
-      color: #aaaaaa !important; /* Medium light gray for better visibility */
-      opacity: 1 !important; /* Ensure placeholder is not transparent */
-  }
-
-  /* Ensure selected option in dropdown is visible */
-   main select option,
-   .fixed.inset-0 > div select option {
-       color: #eeeeee !important; /* Light text for options in dark mode */
-       background-color: #444444 !important; /* Dark background for options */
-   }
-
-
-}
-
-/* Styles from App.css that are not #root related can be kept or moved here if preferred */
-/* For now, assuming App.css only had #root styles and can be empty or removed */
-/* If App.css had other styles, they should be reviewed and potentially moved or adjusted */
+/*
+  Removed other default styles for h1, button, .logo, .card, .read-the-docs
+  as these are either styled by Tailwind or not used in the App component's JSX.
+*/
