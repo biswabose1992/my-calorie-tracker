@@ -1,217 +1,52 @@
 import React, { useState, useEffect, Fragment, useRef } from 'react'; // Import hooks, Fragment, and useRef from React
 import type { JSX } from 'react/jsx-dev-runtime';
 
-// --- Type Definitions ---
-interface FoodItem {
-  name: string;
-  unit: string; // e.g., '100g', 'scoop', 'piece', 'ml'
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fibre?: number; // Fibre is optional in the database, but we'll include it in logged items
-  imageUrl?: string; // imageUrl is optional
-}
+// --- Import Type Definitions and Constants ---
+// Assuming types are in a 'types.ts' file or similar
+import type { FoodItem, LoggedFoodItem, MealType, LoggedMeals, ModalMessage } from './types'; // Assuming types are in a 'types.ts' file
+// Import constants from constants/index.ts
+import {
+    MEAL_TYPES,
+    DETAILED_FOOD_DATABASE,
+    MEAL_SUGGESTIONS,
+    TARGET_CALORIES,
+    TARGET_PROTEIN,
+    TARGET_CARBS,
+    TARGET_FAT,
+    TARGET_FIBRE,
+} from './constants/index'; // Import constants from index.ts
 
-interface LoggedFoodItem {
-    id: string; // Unique ID for each logged entry
-    mealType: MealType;
-    foodName: string; // Name of the food item
-    quantity: number; // The actual quantity logged by the user
-    unit: string; // The unit used for the logged quantity
-    // The nutrient values here are the *calculated totals* for the logged quantity
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    fibre: number; // Ensure fibre is always a number (defaulting to 0 if missing)
-    imageUrl?: string; // imageUrl is optional
-}
+ // Import utility functions from utils.ts
+ import { getToday, formatDate, addDays } from './utils'; // Import utility functions
 
-type MealType = 'Breakfast' | 'Lunch' | 'Snacks' | 'Dinner';
+// Assuming searchFoodDatabase is also in utils.ts and handles suggestions when query is empty
+// If searchFoodDatabase is defined differently in your utils.ts, you might need to adjust this import or the function call below.
+import { searchFoodDatabase as searchFoodDatabaseUtil } from './utils';
 
-interface LoggedMeals {
-    [date: string]: LoggedFoodItem[]; // Key is date string (YYYY-MM-DD), value is array of logged items
-}
 
-interface ModalMessage {
-    text: string;
-    type: 'error' | 'info' | ''; // Message type for styling
-}
+// --- Import Components ---
 
+import ProgressBar from './components/ProgressBar'; // Import ProgressBar component from components folder
+import {
+    ChevronLeft,
+    ChevronRight,
+    CalendarDays,
+    PlusCircle,
+    Trash2,
+    Utensils,
+    SearchIcon,
+    LoaderIcon,
+    EditIcon,
+    CopyIcon,
+    ChevronDown,
+    ChevronUp,
+    BarChartIcon,
+    WeightIcon
+} from './components/Icons'; // Import Icons from components folder
+
+// --- Additional Type Definitions (if not in types.ts) ---
+// If WeightLog is not in types.ts, define it here or move it to types.ts
 type WeightLog = { date: string; weight: number };
-
-// --- Icon Components (SVG) ---
-// Using inline SVG components directly in the JSX for simplicity
-const ChevronLeft = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="15 18 9 12 15 6"></polyline></svg>;
-const ChevronRight = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="9 18 15 12 9 6"></polyline></svg>;
-const CalendarDays = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>;
-const PlusCircle = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>;
-const Trash2 = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>;
-const Utensils = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>;
-const SearchIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
-const LoaderIcon = (props: React.SVGProps<SVGSVGElement>) => <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" {...props}><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1-8-8A8,8,0,0,1,12,20Z" opacity=".25"/><path d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.75s" repeatCount="indefinite"/></path></svg>;
-const EditIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
-const CopyIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>;
-// Added icons for minimize/maximize
-const ChevronDown = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 12 15 18 9"></polyline></svg>;
-const ChevronUp = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="18 15 12 9 6 15"></polyline></svg>;
-// Added icon for weekly average CTA
-const BarChartIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
-    <rect x="3" y="12" width="4" height="8" rx="1" className="fill-green-200" />
-    <rect x="9" y="8" width="4" height="12" rx="1" className="fill-green-400" />
-    <rect x="15" y="4" width="4" height="16" rx="1" className="fill-green-600" />
-  </svg>
-);
-// Added icon for weight tracking CTA
-const WeightIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
-    <rect x="3" y="6" width="18" height="14" rx="3" className="fill-blue-100" />
-    <circle cx="12" cy="13" r="4" className="fill-blue-400" />
-    <rect x="10.5" y="9" width="3" height="6" rx="1.5" className="fill-blue-600" />
-  </svg>
-);
-
-
-// --- Detailed Food Database (Simulates an API source) ---
-// NOTE: Food items include raw ingredients per 100g, plus a few specific processed/cooked items.
-// Values are based on provided images and estimates, and can vary. Fibre added.
-// Added imageUrls (using placeholders for demonstration)
-// REMOVED: Peanut Butter (raw), Almonds (raw), Spinach (raw)
-const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
-  'Apple (raw)': { name: 'Apple (raw)', unit: '100g', calories: 52, protein: 0.3, carbs: 13.8, fat: 0.2, fibre: 2.4, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=🍎' },
-  'Banana (raw)': { name: 'Banana (raw)', unit: '100g', calories: 89, protein: 1.1, carbs: 22.8, fat: 0.3, fibre: 2.6, imageUrl: 'https://placehold.co/40x40/fff3a8/a16207?text=🍌' }, // Keeping previous value as image was generic
-  'Orange (raw)': { name: 'Orange (raw)', unit: '100g', calories: 47, protein: 0.9, carbs: 11.8, fat: 0.1, fibre: 2.4, imageUrl: 'https://placehold.co/40x40/ffedd5/c2410c?text=🍊' },
-  'Grapes (raw)': { name: 'Grapes (raw)', unit: '100g', calories: 69, protein: 0.6, carbs: 18.1, fat: 0.2, fibre: 0.9, imageUrl: 'https://placehold.co/40x40/d8b4fe/581c87?text=🍇' },
-  'Strawberries (raw)': { name: 'Strawberries (raw)', unit: '100g', calories: 33, protein: 0.7, carbs: 7.7, fat: 0.3, fibre: 2, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍓' },
-  'Broccoli (raw)': { name: 'Broccoli (raw)', unit: '100g', calories: 34, protein: 2.8, carbs: 6.6, fat: 0.4, fibre: 2.6, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🥦' },
-  'Carrot (raw)': { name: 'Carrot (raw)', unit: '100g', calories: 41, protein: 0.9, carbs: 9.6, fat: 0.2, fibre: 2.8, imageUrl: 'https://placehold.co/40x40/fed7aa/ea580c?text=🥕' },
-  'Milk (whole, raw)': { name: 'Milk (whole, raw)', unit: '100g', calories: 61, protein: 3.3, carbs: 4.7, fat: 3.3, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥛' }, // Using g for consistency, ~100ml
-  'Yogurt (plain, Greek, raw)': { name: 'Yogurt (plain, Greek, raw)', unit: '100g', calories: 59, protein: 10, carbs: 3.6, fat: 0.4, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥣' }, // Assuming "raw" refers to before adding fruit/sugar, using 100g
-  'Egg (raw)': { name: 'Egg (raw)', unit: '100g', calories: 155, protein: 12.6, carbs: 1.1, fat: 10.6, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🥚' }, // Approx 2 large eggs
-  'Tofu (firm, raw)': { name: 'Tofu (firm, raw)', unit: '100g', calories: 76, protein: 8, carbs: 1.9, fat: 4.8, fibre: 0.3, imageUrl: 'https://placehold.co/40x40/d1d5db/4b5563?text=⬜' },
-  'Olive Oil (raw)': { name: 'Olive Oil (raw)', unit: '100g', calories: 884, protein: 0, carbs: 0, fat: 100, fibre: 0, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🍾' }, // 100g oil = ~109ml
-  'Avocado (raw)': { name: 'Avocado (raw)', unit: '100g', calories: 160, protein: 2, carbs: 9, fat: 14.7, fibre: 6.7, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🥑' },
-  'Lentils (dry, raw)': { name: 'Lentils (dry, raw)', unit: '100g', calories: 352, protein: 24.6, carbs: 63.4, fat: 1.1, fibre: 15.6, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍲' }, // Note: Lentils are typically cooked
-
-  // --- Added and Updated Food Items (Based on Images) ---
-  // Myprotein Impact Whey Protein (Updated from image: 1 scoop | 130 kcal, P: 25g, C: 3g, F: 2g)
-  'Myprotein Impact Whey Protein (1 scoop)': { name: 'Myprotein Impact Whey Protein (1 scoop)', unit: 'scoop', calories: 130, protein: 25, carbs: 3, fat: 2, fibre: 0.3, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥛' }, // Added estimated fibre
-  // Chicken Breast (raw) (Updated from image: 150 gm | 192 kcal, P:39g, C:0g, F:3g -> per 100g)
-  'Chicken Breast (raw)': { name: 'Chicken Breast (raw)', unit: '100g', calories: 128, protein: 26, carbs: 0, fat: 2, fibre: 0, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍗' },
-  // White Rice (raw) (Updated from image: "rice/poha/oats..." 50 gm | 168 kcal, P:4g, C:38g, F:0g -> per 100g)
-   'White Rice (raw)': { name: 'White Rice (raw)', unit: '100g', calories: 336, protein: 8, carbs: 76, fat: 0, fibre: 1, imageUrl: 'https://placehold.co/40x40/d1d5db/4b5563?text=🍚' }, // Added estimated fibre
-  // Indian Dal Fry (cooked) (Updated from image: 150 gm | 150 kcal, P: 7.5g, C: 21g, F: 4.5g -> per 100g)
-  'Indian Dal Fry (cooked)': { name: 'Indian Dal Fry (cooked)', unit: '100g', calories: 100, protein: 5, carbs: 14, fat: 3, fibre: 3, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🍲' }, // Converted and added estimated fibre
-  // Mejdool Dates (raw) (Matches previous values)
-  'Mejdool Dates (raw)': { name: 'Mejdool Dates (raw)', unit: '100g', calories: 277, protein: 1.8, carbs: 75, fat: 0.2, fibre: 6.7, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🌰' },
-  // Curd (Updated from image: 100 gm | 62 kcal, P: 4g, C: 4.4g, F: 3.1g)
-  'Curd': { name: 'Curd', unit: '100g', calories: 62, protein: 4, carbs: 4.4, fat: 3.1, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥣' },
-  // Oats (raw) (Updated from image: "rice/poha/oats..." 50 gm | 168 kcal, P:4g, C:38g, F:0g -> per 100g, changed to raw)
-   'Oats (raw)': { name: 'Oats (raw)', unit: '100g', calories: 336, protein: 8, carbs: 76, fat: 0, fibre: 10, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🥣' }, // Added estimated fibre for raw oats
-   // New items from images
-   'Omega 3': { name: 'Omega 3', unit: 'softgel', calories: 9, protein: 0, carbs: 0, fat: 1, fibre: 0, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=💊' }, // From image
-   'Multivitamin': { name: 'Multivitamin', unit: 'piece', calories: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=💊' }, // From image
-   'Ghee/Butter/Coconut Oil Blend': { name: 'Ghee/Butter/Coconut Oil Blend', unit: '5ml', calories: 45, protein: 0, carbs: 0, fat: 5, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🧈' }, // From image
-};
-
-// --- Meal Types (Order updated: Snacks after Lunch) ---
-const MEAL_TYPES: MealType[] = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
-
-// --- Meal Specific Suggestions Mapping ---
-// Map meal types to a list of food names to suggest initially
-// Updated to remove the removed items
-const MEAL_SUGGESTIONS: { [key in MealType]: string[] } = {
-    'Breakfast': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Curd', 'Yogurt (plain, Greek, raw)', 'Oats (raw)', 'Multivitamin', 'Omega 3'], // Removed Almonds
-    'Lunch': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Broccoli (raw)', 'Lentils (dry, raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend'], // Removed Spinach
-    'Snacks': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Mejdool Dates (raw)', 'Yogurt (plain, Greek, raw)', 'Curd'], // Removed Almonds
-    'Dinner': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Broccoli (raw)', 'Lentils (dry, raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend'], // Removed Spinach
-};
-
-
-// --- Utility Functions ---
-const formatDate = (date: Date): string => {
-    const d = new Date(date);
-    const year = d.getFullYear();
-    const month = (`0${d.getMonth() + 1}`).slice(-2);
-    const day = (`0${d.getDate()}`).slice(-2);
-    return `${year}-${month}-${day}`;
-};
-const getToday = (): string => formatDate(new Date());
-const addDays = (dateStr: string, days: number): string => {
-    const date = new Date(dateStr + 'T00:00:00'); // Ensure date is treated as UTC to avoid timezone issues
-    date.setDate(date.getDate() + days);
-    return formatDate(date);
-};
-
-// --- Simulated API for food search ---
-// Updated to provide meal-specific suggestions if query is empty
-const searchFoodDatabase = (query: string, mealType: MealType | null = null): Promise<FoodItem[]> => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            if (!query.trim() && mealType && MEAL_SUGGESTIONS[mealType]) {
-                // If query is empty and mealType is provided, return meal-specific suggestions
-                const suggestions = MEAL_SUGGESTIONS[mealType]
-                    .map(foodName => DETAILED_FOOD_DATABASE[foodName])
-                    .filter(food => food !== undefined) as FoodItem[]; // Cast to FoodItem[]
-                resolve(suggestions);
-                return;
-            }
-
-            if (!query.trim()) {
-                 // If query is empty and no mealType suggestions, return empty
-                 resolve([]);
-                 return;
-            }
-
-
-            const lowerCaseQuery = query.toLowerCase();
-            const results = Object.values(DETAILED_FOOD_DATABASE).filter(food =>
-                food.name.toLowerCase().includes(lowerCaseQuery)
-            );
-            resolve(results.slice(0, 10)); // Limit results
-        }, 300); // Debounce delay
-    });
-};
-
-// --- Progress Bar Component ---
-interface ProgressBarProps {
-    label: string;
-    current: number;
-    target: number;
-    unit: string;
-    colorClass: string; // Tailwind color class for the bar fill
-}
-
-const ProgressBar: React.FC<ProgressBarProps> = ({ label, current, target, unit, colorClass }) => {
-    const percentage = target > 0 ? Math.min((current / target) * 100, 100) : (current > 0 ? 100 : 0); // Cap visual progress at 100%
-    const isExceeded = target > 0 && current > target;
-    const difference = isExceeded ? current - target : target - current;
-
-    return React.createElement('div', { className: 'mb-3 last:mb-0' }, // Add margin bottom, remove from last item
-        React.createElement('div', { className: 'flex justify-between items-center mb-1' },
-            // MODIFIED: Removed dark mode text color class
-            React.createElement('span', { className: 'text-sm font-medium text-gray-700' }, label), // Responsive text size
-            // MODIFIED: Removed dark mode text color class
-            React.createElement('span', { className: `text-xs font-semibold ${isExceeded ? 'text-red-600' : 'text-gray-600'}` }, // Responsive text size
-                `${current.toFixed(1)} of ${target.toFixed(1)} ${unit}` // Display current/target with one decimal
-            )
-        ),
-        React.createElement('div', { className: 'w-full bg-gray-200 rounded-full h-2.5' }, // Background bar
-            React.createElement('div', {
-                className: `${colorClass} h-2.5 rounded-full transition-all duration-500 ease-in-out ${isExceeded ? 'bg-red-600' : ''}`, // Apply color class, transition, and red if exceeded
-                style: { width: `${percentage}%` }
-            })
-        ),
-        React.createElement('div', { className: 'text-right text-xs mt-1' },
-            isExceeded
-                ? React.createElement('span', { className: 'text-red-600 font-medium' }, `Exceeds By: ${difference.toFixed(1)} ${unit}`) // Dark mode text
-                // MODIFIED: Removed dark mode text color class
-                : React.createElement('span', { className: 'text-gray-600' }, `Remaining: ${difference.toFixed(1)} ${unit}`) // Very Light Gray Dark mode text
-        )
-    );
-};
 
 
 // --- Main App Component ---
@@ -286,13 +121,6 @@ function App(): JSX.Element {
     const [copyTargetDate, setCopyTargetDate] = useState<string>(getToday());
     const [copyDayError, setCopyDayError] = useState<string>('');
 
-    // --- Target Macro/Calorie Values (Example values, you can make these configurable) ---
-    const TARGET_CALORIES = 2200;
-    const TARGET_PROTEIN = 137.5;
-    const TARGET_CARBS = 330;
-    const TARGET_FAT = 36.7;
-    const TARGET_FIBRE = 30; // Example target for fibre
-
     // --- Calculate Weekly Calorie Average ---
     const today = getToday();
     const last7Days = Array.from({ length: 7 }, (_, i) => addDays(today, -6 + i));
@@ -344,6 +172,8 @@ function App(): JSX.Element {
             return;
         }
 
+        console.log('Modal is open, running search effect.'); // Debugging log
+
         // Auto-focus the search input when adding a new item
         if (editingMealId === null && copyingMeal === null && searchInputRef.current) {
              searchInputRef.current.focus();
@@ -357,11 +187,17 @@ function App(): JSX.Element {
              if (!query) {
                  // If search term is empty, load meal-specific suggestions
                  setIsLoadingSearch(true);
-                  // Pass the selectedMealType to get relevant suggestions
-                 searchFoodDatabase('', selectedMealType).then(results => {
-                      setSearchResults(results);
-                      setIsLoadingSearch(false);
-                 });
+                 console.log(`Search term is empty, fetching suggestions for meal type: ${selectedMealType}`); // Debugging log
+                try {
+    const results = searchFoodDatabaseUtil('', DETAILED_FOOD_DATABASE);
+    setSearchResults(results);
+    setIsLoadingSearch(false);
+} catch  {
+    setIsLoadingSearch(false);
+    setModalMessage({ text: 'Error fetching suggestions.', type: 'error' });
+}
+
+
                  setSelectedFoodForModal(null); // Clear selected food when search term is empty
                  // Clear custom fields when search term is empty
                  setCustomFoodName('');
@@ -376,26 +212,28 @@ function App(): JSX.Element {
 
              // If search term is not empty, perform standard search
              setIsLoadingSearch(true);
+             console.log(`Search term is not empty, searching for: ${query}`); // Debugging log
              const handler = setTimeout(() => {
-                 searchFoodDatabase(query).then(results => {
-                     setSearchResults(results);
-                     setIsLoadingSearch(false);
-                     // If search results are empty after typing, clear selected food
-                     if (results.length === 0) {
-                         setSelectedFoodForModal(null);
-                         // Auto-fill custom food name if no results
-                         setCustomFoodName(query);
-                     } else {
-                          // Clear custom fields if search results are found
-                          setCustomFoodName('');
-                          setCustomCalories('');
-                          setCustomProtein('');
-                          setCustomCarbs('');
-                          setCustomFat('');
-                          setCustomFibre('');
-                          setCustomUnit('g'); // Reset custom unit to 'g'
-                     }
-                 });
+try {
+    const results = searchFoodDatabaseUtil(query, DETAILED_FOOD_DATABASE);
+    setSearchResults(results);
+    setIsLoadingSearch(false);
+    if (results.length === 0) {
+        setSelectedFoodForModal(null);
+        setCustomFoodName(query);
+    } else {
+        setCustomFoodName('');
+        setCustomCalories('');
+        setCustomProtein('');
+        setCustomCarbs('');
+        setCustomFat('');
+        setCustomFibre('');
+        setCustomUnit('g');
+    }
+} catch  {
+    setIsLoadingSearch(false);
+    setModalMessage({ text: 'Error during search.', type: 'error' });
+}
              }, 300); // Debounce delay
 
              // Cleanup function: This runs when the effect re-runs (due to searchTerm change)
@@ -466,9 +304,9 @@ function App(): JSX.Element {
 
              const q = parseFloat(quantity as string); // Cast quantity to string
              const calsPerUnit = parseFloat(customCalories as string); // Cast customCalories to string
-             const protPerUnit = parseFloat(customProtein as string); // Cast customProtein to string
-             const carbsPerUnit = parseFloat(customCarbs as string); // Cast customCarbs to string
-             const fatPerUnit = parseFloat(customFat as string); // Cast customFat to string
+             const protPerUnit = parseFloat(customProtein as string); // Cast customProtein as string
+             const carbsPerUnit = parseFloat(customCarbs as string); // Cast customCarbs as string
+             const fatPerUnit = parseFloat(customFat as string); // Cast customFat as string
              const fibrePerUnit = parseFloat(customFibre as string); // Get custom fibre, cast to string
 
              // Validation for editing
@@ -519,7 +357,7 @@ function App(): JSX.Element {
                 carbs: Math.round(carbsPerUnit * q * 10) / 10,
                 fat: Math.round(fatPerUnit * q * 10) / 10,
                 fibre: Math.round(fibrePerUnit * q * 10) / 10, // Include fibre
-                imageUrl: 'https://placehold.co/40x40/cccccc/333333?text=�️' // Default image for custom items
+                imageUrl: 'https://placehold.co/40x40/cccccc/333333?text=🍽️' // Default image for custom items
             };
         }
 
@@ -561,8 +399,6 @@ function App(): JSX.Element {
         });
     };
 
-    // (Removed unused openCopyDayModal function)
-
     // Handler: Actually copy the template
     const handleCopyDayTemplate = () => {
         if (!copySourceDate || !copyTargetDate) {
@@ -591,8 +427,10 @@ function App(): JSX.Element {
         setShowCopyDayModal(false);
     };
 
+
     // Function to handle opening the modal for adding
     const openAddModal = (mealType: MealType) => { // Accept mealType as argument
+        console.log('openAddModal called for meal type:', mealType); // Debugging log
         // Reset modal states before opening for adding
         setSelectedMealType(mealType); // Set the selected meal type
         setSearchTerm(''); // Start with an empty search term to trigger suggestions
@@ -610,11 +448,13 @@ function App(): JSX.Element {
         setCustomFat('');
         setCustomFibre(''); // Reset custom fibre
         setCustomUnit('g'); // Reset custom unit to 'g'
-        setShowModal(true);
+        setShowModal(true); // This should trigger the modal to show
+        console.log('showModal set to true.'); // Debugging log
     };
 
     // Function to handle opening the modal for editing
     const openEditModal = (meal: LoggedFoodItem) => { // meal is a LoggedFoodItem
+         console.log('openEditModal called for meal:', meal); // Debugging log
          // Set modal states based on the meal being edited
          setSelectedMealType(meal.mealType);
          setQuantity(meal.quantity); // Quantity is the logged quantity
@@ -638,10 +478,12 @@ function App(): JSX.Element {
          setSelectedFoodForModal(null);
 
          setShowModal(true);
+         console.log('showModal set to true for editing.'); // Debugging log
     };
 
     // Function to handle opening the modal for copying
     const openCopyModal = (meal: LoggedFoodItem) => { // meal is a LoggedFoodItem
+        console.log('openCopyModal called for meal:', meal); // Debugging log
         // Set modal states based on the meal being copied
         setSelectedMealType(meal.mealType); // Start with the original meal type, user can change
         setQuantity(meal.quantity); // Start with the original quantity
@@ -674,11 +516,13 @@ function App(): JSX.Element {
 
 
         setShowModal(true);
+        console.log('showModal set to true for copying.'); // Debugging log
     };
 
 
     // Function to close the modal and reset states
     const closeModal = () => {
+        console.log('closeModal called.'); // Debugging log
         setShowModal(false);
         setSearchTerm('');
         setSearchResults([]);
@@ -810,6 +654,7 @@ function App(): JSX.Element {
 
     // Function to handle selecting a food item from search results
     const handleSelectFoodFromSearch = (food: FoodItem) => {
+        console.log('Selected food from search:', food); // Debugging log
         setSelectedFoodForModal(food);
         setSearchTerm(food.name);
         setSearchResults([]); // Clear results after selection
@@ -845,6 +690,7 @@ function App(): JSX.Element {
 
     // Function to handle date selection from the calendar
     const handleDateSelect = (date: string) => {
+        console.log('Date selected from calendar:', date); // Debugging log
         setCurrentDate(date);
         setShowCalendarModal(false); // Close calendar modal after selection
     };
@@ -1158,16 +1004,20 @@ function App(): JSX.Element {
                                         textAnchor: 'middle'
                                     }, new Date(d.date + 'T00:00:00').getDate())
                                 ),
-                                [minWeight, maxWeight].map((w, i) =>
-                                    React.createElement(React.Fragment, { key: i },
-                                        React.createElement('line', {
-                                            x1: 20, x2: 340, y1: 10 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))), y2: 10 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))),
-                                            stroke: '#e5e7eb', strokeWidth: 1
-                                        }),
-                                        React.createElement('text', {
-                                            x: 10, y: 14 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))),
-                                            fontSize: 8, fill: '#64748b', textAnchor: 'end'
-                                        }, w)
+                                React.createElement(
+                                    React.Fragment,
+                                    null,
+                                    [minWeight, maxWeight].map((w, i) =>
+                                        React.createElement(React.Fragment, { key: i },
+                                            React.createElement('line', {
+                                                x1: 20, x2: 340, y1: 10 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))), y2: 10 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))),
+                                                stroke: '#e5e7eb', strokeWidth: 1
+                                            }),
+                                            React.createElement('text', {
+                                                x: 10, y: 14 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))),
+                                                fontSize: 8, fill: '#64748b', textAnchor: 'end'
+                                            }, w)
+                                        )
                                     )
                                 ),
                                 React.createElement('polyline', {
@@ -1202,7 +1052,7 @@ function App(): JSX.Element {
             ),
 
             // Modal for Adding/Editing Food
-            showModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 backdrop-blur-sm' },
+            showModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 backdrop-blur-sm' },// Debugging log
                 // Modal content container: Added flex-col and h-full to manage vertical space
                 // MODIFIED: Removed dark mode background
                 React.createElement('div', { className: 'bg-white p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300 ease-out scale-100 flex flex-col h-full max-h-[90vh]' }, // Adjusted max-h
@@ -1255,7 +1105,22 @@ function App(): JSX.Element {
                                 // MODIFIED: Removed dark mode text color
                                 !isLoadingSearch && searchResults.length === 0 && searchTerm.trim() && React.createElement('p', { className: 'text-gray-500 p-2 text-center text-sm transition-colors' }, `No food items found for "${searchTerm}". Enter details below to add a custom item.`), // Responsive text size, Added transition
                                 // MODIFIED: Removed dark mode text color
-                                !isLoadingSearch && searchResults.length === 0 && !searchTerm.trim() && React.createElement('p', { className: 'text-gray-500 p-2 text-center text-sm transition-colors' }, `Suggested for ${selectedMealType}:`), // Message for suggestions, Responsive text size, Added transition
+                                !isLoadingSearch && !searchTerm.trim() && !editingMealId && React.createElement(
+                            React.Fragment,
+                            null,
+                            React.createElement('p', { className: 'text-gray-500 p-2 text-center text-sm transition-colors' }, `Suggested for ${selectedMealType}:`),
+                            React.createElement('ul', { className: 'flex flex-wrap gap-2 justify-center mt-2' },
+                                (MEAL_SUGGESTIONS[selectedMealType] || []).map(suggestion =>
+                                    React.createElement('li', { key: suggestion },
+                                        React.createElement('button', {
+                                            type: 'button',
+                                            className: 'px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded-full text-xs font-medium transition-colors',
+                                            onClick: () => setSearchTerm(suggestion)
+                                        }, suggestion)
+                                    )
+                                )
+                            )
+                        ), // Message for suggestions, Responsive text size, Added transition
                                  // MODIFIED: Removed dark mode border and background
                                  !isLoadingSearch && searchResults.length > 0 && React.createElement('ul', { className: 'space-y-1 border border-gray-200 rounded-md p-1 bg-gray-50 transition-colors' }, // Added transition
                                     searchResults.map(food => React.createElement('li', {
@@ -1374,7 +1239,7 @@ function App(): JSX.Element {
                                             className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
                                         })
                                     ),
-                                    React.createElement('div', {}, // Fibre input field
+                                     React.createElement('div', {}, // Fibre input field
                                          // MODIFIED: Removed dark mode text color
                                          React.createElement('label', { htmlFor: 'customFibre', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Fibre (g per unit)'), // Label for Fibre, Added transition
                                          // MODIFIED: Removed dark mode colors
@@ -1433,11 +1298,13 @@ function App(): JSX.Element {
                     ),
                     React.createElement('div', { className: 'w-full mb-4' },
                         React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Select day to copy from:'),
-                        React.createElement('select', {
-                            value: copySourceDate || '',
-                            onChange: e => setCopySourceDate((e.target as HTMLSelectElement).value),
-                            className: 'w-full p-2 border border-gray-300 rounded mb-2'
-                        },
+                        React.createElement(
+                            'select',
+                            {
+                                value: copySourceDate || '',
+                                onChange: e => setCopySourceDate((e.target as HTMLSelectElement).value),
+                                className: 'w-full p-2 border border-gray-300 rounded mb-2'
+                            } as React.SelectHTMLAttributes<HTMLSelectElement>,
                             React.createElement('option', { value: '', disabled: true }, 'Select a day'),
                             last7Days
                                 .filter(date => (loggedMeals[date] && loggedMeals[date].length > 0))
@@ -1448,11 +1315,13 @@ function App(): JSX.Element {
                                 )
                         ),
                         React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Copy to:'),
-                        React.createElement('select', {
-                            value: copyTargetDate,
-                            onChange: e => setCopyTargetDate((e.target as HTMLSelectElement).value),
-                            className: 'w-full p-2 border border-gray-300 rounded'
-                        },
+                        React.createElement(
+                            'select',
+                            {
+                                value: copyTargetDate,
+                                onChange: e => setCopyTargetDate((e.target as HTMLSelectElement).value),
+                                className: 'w-full p-2 border border-gray-300 rounded'
+                            } as React.SelectHTMLAttributes<HTMLSelectElement>,
                             next7Days.map(date =>
                                 React.createElement('option', { key: date, value: date },
                                     new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
