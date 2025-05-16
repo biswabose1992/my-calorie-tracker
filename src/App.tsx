@@ -50,7 +50,7 @@ const PlusCircle = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://
 const Trash2 = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>;
 const Utensils = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path></svg>;
 const SearchIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
-const LoaderIcon = (props: React.SVGProps<SVGSVGElement>) => <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" {...props}><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><path d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.75s" repeatCount="indefinite"/></path></svg>;
+const LoaderIcon = (props: React.SVGProps<SVGSVGElement>) => <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" {...props}><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1-8-8A8,8,0,0,1,12,20Z" opacity=".25"/><path d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.75s" repeatCount="indefinite"/></path></svg>;
 const EditIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
 const CopyIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>;
 // Added icons for minimize/maximize
@@ -279,6 +279,12 @@ function App(): JSX.Element {
 
     // Ref for the search input for auto-focus
     const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // New state for Copy Day Template Modal
+    const [showCopyDayModal, setShowCopyDayModal] = useState<boolean>(false);
+    const [copySourceDate, setCopySourceDate] = useState<string | null>(null);
+    const [copyTargetDate, setCopyTargetDate] = useState<string>(getToday());
+    const [copyDayError, setCopyDayError] = useState<string>('');
 
     // --- Target Macro/Calorie Values (Example values, you can make these configurable) ---
     const TARGET_CALORIES = 2200;
@@ -555,6 +561,36 @@ function App(): JSX.Element {
         });
     };
 
+    // (Removed unused openCopyDayModal function)
+
+    // Handler: Actually copy the template
+    const handleCopyDayTemplate = () => {
+        if (!copySourceDate || !copyTargetDate) {
+            setCopyDayError('Please select a date.');
+            return;
+        }
+        if (copySourceDate === copyTargetDate) {
+            setCopyDayError('Cannot copy to the same day.');
+            return;
+        }
+        // Copy all meals from source to target date (overwrite)
+        const sourceMeals = loggedMeals[copySourceDate] || [];
+        if (sourceMeals.length === 0) {
+            setCopyDayError('No meals to copy from the selected day.');
+            return;
+        }
+        // Assign new IDs to each meal for the target day
+        const copiedMeals = sourceMeals.map(meal => ({
+            ...meal,
+            id: Date.now().toString() + Math.random().toString(36).slice(2, 8), // Unique ID
+        }));
+        setLoggedMeals(prev => ({
+            ...prev,
+            [copyTargetDate]: copiedMeals,
+        }));
+        setShowCopyDayModal(false);
+    };
+
     // Function to handle opening the modal for adding
     const openAddModal = (mealType: MealType) => { // Accept mealType as argument
         // Reset modal states before opening for adding
@@ -813,6 +849,8 @@ function App(): JSX.Element {
         setShowCalendarModal(false); // Close calendar modal after selection
     };
 
+    // Helper: Get next 7 days (including today)
+    const next7Days = Array.from({ length: 7 }, (_, i) => addDays(getToday(), i));
 
     // JSX structure using React.createElement (as in your original stub)
     return (
@@ -825,6 +863,37 @@ function App(): JSX.Element {
                 React.createElement('h1', { className: 'text-3xl md:text-4xl font-bold text-green-700 flex items-center justify-center transition-colors' }, // Responsive text size, Added transition
                     React.createElement(Utensils, { className: 'mr-2 md:mr-3 w-8 h-8 md:w-10 md:h-10' }), // Responsive icon size
                     'Daily Calorie & Nutrient Tracker'
+                )
+            ),
+
+            // Container for top CTA buttons
+            React.createElement('div', { className: 'w-full max-w-3xl flex justify-end items-center gap-2 mb-4' },
+                // Weekly Average CTA - Icon only
+                React.createElement('button', {
+                    onClick: () => setShowWeeklyModal(true),
+                    className: 'p-2 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50',
+                    'aria-label': 'Show Weekly Calorie Average'
+                },
+                    React.createElement(BarChartIcon, { className: 'w-5 h-5' })
+                ),
+                // Weight Log CTA - Icon only
+                React.createElement('button', {
+                    onClick: () => setShowWeightModal(true),
+                    className: 'p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50',
+                    'aria-label': 'Log Weight & View Trend'
+                },
+                    React.createElement(WeightIcon, { className: 'w-5 h-5' })
+                ),
+                // Copy Day Template CTA - Icon only
+                React.createElement('button', {
+                    onClick: () => setShowCopyDayModal(true),
+                    className: 'p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-opacity-50',
+                    'aria-label': 'Copy Day Template'
+                },
+                    React.createElement('svg', { className: 'w-5 h-5', fill: 'none', stroke: 'currentColor', strokeWidth: 2, viewBox: '0 0 24 24' },
+                        React.createElement('path', { d: 'M8 17l4 4 4-4m-4-5v9', strokeLinecap: 'round', strokeLinejoin: 'round' }),
+                        React.createElement('rect', { x: 3, y: 3, width: 18, height: 13, rx: 2, strokeLinecap: 'round', strokeLinejoin: 'round' })
+                    )
                 )
             ),
 
@@ -900,28 +969,6 @@ function App(): JSX.Element {
                 // MODIFIED: Removed dark mode colors
                 !isToday && React.createElement('div', { className: 'mb-6 text-center p-3 bg-blue-100 text-blue-700 rounded-md text-sm transition-colors' }, // Responsive text size, Added transition
                     React.createElement('p', { className: 'text-sm' }, 'You are viewing a past date. Food items can only be logged for today.')
-                ),
-
-                // Weekly Average CTA
-                React.createElement('div', { className: 'w-full max-w-3xl flex justify-end mb-4' },
-                    React.createElement('button', {
-                        onClick: () => setShowWeeklyModal(true),
-                        className: 'flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50'
-                    },
-                        React.createElement(BarChartIcon, { className: 'w-5 h-5' }),
-                        'Show Weekly Calorie Average'
-                    )
-                ),
-
-                // Weight Log CTA
-                React.createElement('div', { className: 'w-full max-w-3xl flex justify-end mb-2' },
-                    React.createElement('button', {
-                        onClick: () => setShowWeightModal(true),
-                        className: 'flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
-                    },
-                        React.createElement(WeightIcon, { className: 'w-5 h-5' }),
-                        'Log Weight & View Trend'
-                    )
                 ),
 
                 // Meal Sections
@@ -1368,6 +1415,60 @@ function App(): JSX.Element {
                         }, editingMealId ? 'Save Changes' : 'Add Food'),
                         React.createElement('button', {
                             onClick: closeModal,
+                            className: 'flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                        }, 'Cancel')
+                    )
+                )
+            ),
+
+            // Copy Day Template Modal
+            showCopyDayModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50' },
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm flex flex-col items-center' },
+                    React.createElement('h3', { className: 'text-lg font-bold text-yellow-700 mb-2 flex items-center gap-2' },
+                        React.createElement('svg', { className: 'w-6 h-6', fill: 'none', stroke: 'currentColor', strokeWidth: 2, viewBox: '0 0 24 24' },
+                            React.createElement('path', { d: 'M8 17l4 4 4-4m-4-5v9', strokeLinecap: 'round', strokeLinejoin: 'round' }),
+                            React.createElement('rect', { x: 3, y: 3, width: 18, height: 13, rx: 2, strokeLinecap: 'round', strokeLinejoin: 'round' })
+                        ),
+                        'Copy Day Template'
+                    ),
+                    React.createElement('div', { className: 'w-full mb-4' },
+                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Select day to copy from:'),
+                        React.createElement('select', {
+                            value: copySourceDate || '',
+                            onChange: e => setCopySourceDate((e.target as HTMLSelectElement).value),
+                            className: 'w-full p-2 border border-gray-300 rounded mb-2'
+                        },
+                            React.createElement('option', { value: '', disabled: true }, 'Select a day'),
+                            last7Days
+                                .filter(date => (loggedMeals[date] && loggedMeals[date].length > 0))
+                                .map(date =>
+                                    React.createElement('option', { key: date, value: date },
+                                        new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                                    )
+                                )
+                        ),
+                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Copy to:'),
+                        React.createElement('select', {
+                            value: copyTargetDate,
+                            onChange: e => setCopyTargetDate((e.target as HTMLSelectElement).value),
+                            className: 'w-full p-2 border border-gray-300 rounded'
+                        },
+                            next7Days.map(date =>
+                                React.createElement('option', { key: date, value: date },
+                                    new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                                    date === getToday() ? ' (Today)' : ''
+                                )
+                            )
+                        )
+                    ),
+                    copyDayError && React.createElement('div', { className: 'text-red-600 text-xs mb-2' }, copyDayError),
+                    React.createElement('div', { className: 'flex gap-2 mt-2' },
+                        React.createElement('button', {
+                            onClick: handleCopyDayTemplate,
+                            className: 'flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-400'
+                        }, 'Copy'),
+                        React.createElement('button', {
+                            onClick: () => setShowCopyDayModal(false),
                             className: 'flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400'
                         }, 'Cancel')
                     )
