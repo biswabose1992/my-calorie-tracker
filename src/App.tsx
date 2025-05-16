@@ -58,6 +58,7 @@ const CopyIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://ww
 // NOTE: Food items include raw ingredients per 100g, plus a few specific processed/cooked items.
 // Values are based on provided images and estimates, and can vary. Fibre added.
 // Added imageUrls (using placeholders for demonstration)
+// REMOVED: Peanut Butter (raw), Almonds (raw), Spinach (raw)
 const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
   'Apple (raw)': { name: 'Apple (raw)', unit: '100g', calories: 52, protein: 0.3, carbs: 13.8, fat: 0.2, fibre: 2.4, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=🍎' },
   'Banana (raw)': { name: 'Banana (raw)', unit: '100g', calories: 89, protein: 1.1, carbs: 22.8, fat: 0.3, fibre: 2.6, imageUrl: 'https://placehold.co/40x40/fff3a8/a16207?text=🍌' }, // Keeping previous value as image was generic
@@ -66,15 +67,12 @@ const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
   'Strawberries (raw)': { name: 'Strawberries (raw)', unit: '100g', calories: 33, protein: 0.7, carbs: 7.7, fat: 0.3, fibre: 2, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍓' },
   'Broccoli (raw)': { name: 'Broccoli (raw)', unit: '100g', calories: 34, protein: 2.8, carbs: 6.6, fat: 0.4, fibre: 2.6, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🥦' },
   'Carrot (raw)': { name: 'Carrot (raw)', unit: '100g', calories: 41, protein: 0.9, carbs: 9.6, fat: 0.2, fibre: 2.8, imageUrl: 'https://placehold.co/40x40/fed7aa/ea580c?text=🥕' },
-  'Spinach (raw)': { name: 'Spinach (raw)', unit: '100g', calories: 23, protein: 2.9, carbs: 3.6, fat: 0.4, fibre: 2.4, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🍃' },
   'Milk (whole, raw)': { name: 'Milk (whole, raw)', unit: '100g', calories: 61, protein: 3.3, carbs: 4.7, fat: 3.3, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥛' }, // Using g for consistency, ~100ml
   'Yogurt (plain, Greek, raw)': { name: 'Yogurt (plain, Greek, raw)', unit: '100g', calories: 59, protein: 10, carbs: 3.6, fat: 0.4, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥣' }, // Assuming "raw" refers to before adding fruit/sugar, using 100g
   'Egg (raw)': { name: 'Egg (raw)', unit: '100g', calories: 155, protein: 12.6, carbs: 1.1, fat: 10.6, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🥚' }, // Approx 2 large eggs
   'Tofu (firm, raw)': { name: 'Tofu (firm, raw)', unit: '100g', calories: 76, protein: 8, carbs: 1.9, fat: 4.8, fibre: 0.3, imageUrl: 'https://placehold.co/40x40/d1d5db/4b5563?text=⬜' },
   'Olive Oil (raw)': { name: 'Olive Oil (raw)', unit: '100g', calories: 884, protein: 0, carbs: 0, fat: 100, fibre: 0, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🍾' }, // 100g oil = ~109ml
   'Avocado (raw)': { name: 'Avocado (raw)', unit: '100g', calories: 160, protein: 2, carbs: 9, fat: 14.7, fibre: 6.7, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🥑' },
-  'Almonds (raw)': { name: 'Almonds (raw)', unit: '100g', calories: 579, protein: 21.2, carbs: 21.6, fat: 49.9, fibre: 12.5, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🌰' },
-  'Peanut Butter (raw)': { name: 'Peanut Butter (raw)', unit: '100g', calories: 588, protein: 25.8, carbs: 20.9, fat: 50.4, fibre: 8, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🍯' }, // Assuming natural, unsweetened
   'Lentils (dry, raw)': { name: 'Lentils (dry, raw)', unit: '100g', calories: 352, protein: 24.6, carbs: 63.4, fat: 1.1, fibre: 15.6, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍲' }, // Note: Lentils are typically cooked
 
   // --- Added and Updated Food Items (Based on Images) ---
@@ -103,11 +101,12 @@ const MEAL_TYPES: MealType[] = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
 
 // --- Meal Specific Suggestions Mapping ---
 // Map meal types to a list of food names to suggest initially
+// Updated to remove the removed items
 const MEAL_SUGGESTIONS: { [key in MealType]: string[] } = {
-    'Breakfast': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Curd', 'Yogurt (plain, Greek, raw)', 'Oats (raw)', 'Almonds (raw)', 'Multivitamin', 'Omega 3'], // Updated for new items and raw oats
-    'Lunch': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Broccoli (raw)', 'Spinach (raw)', 'Lentils (dry, raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend'], // Updated for new items
-    'Snacks': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Mejdool Dates (raw)', 'Almonds (raw)', 'Yogurt (plain, Greek, raw)', 'Curd'], // Updated for new items
-    'Dinner': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Broccoli (raw)', 'Spinach (raw)', 'Lentils (dry, raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend'], // Updated for new items
+    'Breakfast': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Curd', 'Yogurt (plain, Greek, raw)', 'Oats (raw)', 'Multivitamin', 'Omega 3'], // Removed Almonds
+    'Lunch': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Broccoli (raw)', 'Lentils (dry, raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend'], // Removed Spinach
+    'Snacks': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Mejdool Dates (raw)', 'Yogurt (plain, Greek, raw)', 'Curd'], // Removed Almonds
+    'Dinner': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Broccoli (raw)', 'Lentils (dry, raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend'], // Removed Spinach
 };
 
 
@@ -441,7 +440,7 @@ function App(): JSX.Element {
         setSearchTerm(''); // Start with an empty search term to trigger suggestions
         setSearchResults([]); // Clear previous search results
         setSelectedFoodForModal(null);
-        setQuantity(1);
+        setQuantity(1); // Default quantity when opening modal
         setModalMessage({ text: '', type: '' });
         setEditingMealId(null); // Ensure editing state is off
         setCopyingMeal(null); // Ensure copying state is off
@@ -526,7 +525,7 @@ function App(): JSX.Element {
         setSearchTerm('');
         setSearchResults([]);
         setSelectedFoodForModal(null);
-        setQuantity(1);
+        setQuantity(1); // Reset quantity to 1 when closing modal
         setModalMessage({ text: '', type: '' });
         setEditingMealId(null); // Reset editing state
         setCopyingMeal(null); // Reset copying state
@@ -647,6 +646,21 @@ function App(): JSX.Element {
             return 'Copy Food Item';
         } else {
             return 'Log a New Food Item';
+        }
+    };
+
+
+    // Function to handle selecting a food item from search results
+    const handleSelectFoodFromSearch = (food: FoodItem) => {
+        setSelectedFoodForModal(food);
+        setSearchTerm(food.name);
+        setSearchResults([]); // Clear results after selection
+
+        // Set default quantity based on food type
+        if (food.name === 'Multivitamin' || food.name === 'Omega 3' || food.name === 'Myprotein Impact Whey Protein (1 scoop)') {
+            setQuantity(1); // Set quantity to 1 for supplements
+        } else {
+            setQuantity(100); // Set quantity to 100 for other food items
         }
     };
 
@@ -814,7 +828,7 @@ function App(): JSX.Element {
                                 React.createElement('div', { className: 'relative flex items-center' },
                                     React.createElement('input', {
                                         type: 'text', id: 'foodSearch', placeholder: 'Type to search or add custom...',
-                                        value: searchTerm, onChange: (e: React.ChangeEvent<HTMLInputElement>) => { setSearchTerm(e.target.value); setSelectedFoodForModal(null); },
+                                        value: searchTerm, onChange: (e: React.ChangeEvent<HTMLInputElement>) => { setSearchTerm(e.target.value); setSelectedFoodForModal(null); setQuantity(1); }, // Reset quantity when typing in search
                                         ref: searchInputRef, // Attach ref to the search input
                                         className: 'w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size
                                     }) as React.ReactElement, // Cast to React.ReactElement
@@ -832,7 +846,7 @@ function App(): JSX.Element {
                                  !isLoadingSearch && searchResults.length > 0 && React.createElement('ul', { className: 'space-y-1 border border-gray-200 rounded-md p-1 bg-gray-50' },
                                     searchResults.map(food => React.createElement('li', {
                                         key: food.name,
-                                        onClick: () => { setSelectedFoodForModal(food); setSearchTerm(food.name); setSearchResults([]); /* Clear results after selection */ }, // Set search term on selection
+                                        onClick: () => handleSelectFoodFromSearch(food), // Use the new handler
                                         className: `p-2 hover:bg-green-100 rounded cursor-pointer ${selectedFoodForModal && selectedFoodForModal.name === food.name ? 'bg-green-200 ring-2 ring-green-500' : ''}`
                                         },
                                          React.createElement('div', { className: 'flex items-center' }, // Flex container for image and text
@@ -989,10 +1003,6 @@ function App(): JSX.Element {
 }
 
 export default App; // Export the component as default
-
-// The original _renderApp function and DOMContentLoaded listener are removed
-// as they are part of the simplified stub. In a real React app, you would
-// typically render the App component using ReactDOM.render or createRoot.
 
 // If you are still encountering "Cannot find namespace 'JSX'" errors,
 // you might need to install the React type definitions:
