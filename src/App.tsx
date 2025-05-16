@@ -55,6 +55,14 @@ const CopyIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://ww
 // Added icons for minimize/maximize
 const ChevronDown = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 12 15 18 9"></polyline></svg>;
 const ChevronUp = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="18 15 12 9 6 15"></polyline></svg>;
+// Added icon for weekly average CTA
+const BarChartIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+    <rect x="3" y="12" width="4" height="8" rx="1" className="fill-green-200" />
+    <rect x="9" y="8" width="4" height="12" rx="1" className="fill-green-400" />
+    <rect x="15" y="4" width="4" height="16" rx="1" className="fill-green-600" />
+  </svg>
+);
 
 
 // --- Detailed Food Database (Simulates an API source) ---
@@ -229,6 +237,8 @@ function App(): JSX.Element {
     // New state for calendar modal visibility
     const [showCalendarModal, setShowCalendarModal] = useState<boolean>(false);
 
+    // Weekly Average Modal State
+    const [showWeeklyModal, setShowWeeklyModal] = useState(false);
 
     // Modal specific states
     const [searchTerm, setSearchTerm] = useState<string>('');
@@ -256,6 +266,13 @@ function App(): JSX.Element {
     const TARGET_FAT = 36.7;
     const TARGET_FIBRE = 30; // Example target for fibre
 
+    // --- Calculate Weekly Calorie Average ---
+    const today = getToday();
+    const last7Days = Array.from({ length: 7 }, (_, i) => addDays(today, -6 + i));
+    const weeklyCalories = last7Days.map(date =>
+      (loggedMeals[date]?.reduce((sum, meal) => sum + meal.calories, 0)) || 0
+    );
+    const weeklyAverage = weeklyCalories.reduce((a, b) => a + b, 0) / 7;
 
     // Effect to save meals to localStorage whenever loggedMeals changes
     useEffect(() => {
@@ -833,6 +850,16 @@ function App(): JSX.Element {
                     React.createElement('p', { className: 'text-sm' }, 'You are viewing a past date. Food items can only be logged for today.')
                 ),
 
+                // Weekly Average CTA
+                React.createElement('div', { className: 'w-full max-w-3xl flex justify-end mb-4' },
+                    React.createElement('button', {
+                        onClick: () => setShowWeeklyModal(true),
+                        className: 'flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50'
+                    },
+                        React.createElement(BarChartIcon, { className: 'w-5 h-5' }),
+                        'Show Weekly Calorie Average'
+                    )
+                ),
 
                 // Meal Sections
                 MEAL_TYPES.map(mealType => {
@@ -941,6 +968,38 @@ function App(): JSX.Element {
                  )
             ),
 
+            // Weekly Average Modal
+            showWeeklyModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50' },
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-xs flex flex-col items-center' },
+                    React.createElement('h3', { className: 'text-lg font-bold text-green-700 mb-2 flex items-center gap-2' },
+                        React.createElement(BarChartIcon, { className: 'w-6 h-6' }),
+                        'Weekly Calorie Average'
+                    ),
+                    React.createElement('div', { className: 'text-4xl font-extrabold text-green-600 mb-2' },
+                        Math.round(weeklyAverage), ' kcal'
+                    ),
+                    React.createElement('div', { className: 'w-full mt-2 mb-4' },
+                        React.createElement('table', { className: 'w-full text-xs text-gray-700' },
+                            React.createElement('tbody', null,
+                                last7Days.map((date, idx) =>
+                                    React.createElement('tr', { key: date },
+                                        React.createElement('td', { className: 'pr-2 py-1 text-right' },
+                                            new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                                        ),
+                                        React.createElement('td', { className: 'pl-2 py-1 font-semibold text-right' },
+                                            weeklyCalories[idx], ' kcal'
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    ),
+                    React.createElement('button', {
+                        onClick: () => setShowWeeklyModal(false),
+                        className: 'mt-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm'
+                    }, 'Close')
+                )
+            ),
 
             // Modal for Adding/Editing Food
             showModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 backdrop-blur-sm' },
