@@ -52,6 +52,9 @@ const SearchIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://
 const LoaderIcon = (props: React.SVGProps<SVGSVGElement>) => <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" {...props}><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25"/><path d="M10.72,19.9a8,8,0,0,1-6.5-9.79A7.77,7.77,0,0,1,10.4,4.16a8,8,0,0,1,9.49,6.52A1.54,1.54,0,0,0,21.38,12h.13a1.37,1.37,0,0,0,1.38-1.54,11,11,0,1,0-12.7,12.39A1.54,1.54,0,0,0,12,21.34h0A1.47,1.47,0,0,0,10.72,19.9Z"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.75s" repeatCount="indefinite"/></path></svg>;
 const EditIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
 const CopyIcon = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>;
+// Added icons for minimize/maximize
+const ChevronDown = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 12 15 18 9"></polyline></svg>;
+const ChevronUp = (props: React.SVGProps<SVGSVGElement>) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="18 15 12 9 6 15"></polyline></svg>;
 
 
 // --- Detailed Food Database (Simulates an API source) ---
@@ -155,6 +158,42 @@ const searchFoodDatabase = (query: string, mealType: MealType | null = null): Pr
     });
 };
 
+// --- Progress Bar Component ---
+interface ProgressBarProps {
+    label: string;
+    current: number;
+    target: number;
+    unit: string;
+    colorClass: string; // Tailwind color class for the bar fill
+}
+
+const ProgressBar: React.FC<ProgressBarProps> = ({ label, current, target, unit, colorClass }) => {
+    const percentage = target > 0 ? Math.min((current / target) * 100, 100) : (current > 0 ? 100 : 0); // Cap visual progress at 100%
+    const isExceeded = target > 0 && current > target;
+    const difference = isExceeded ? current - target : target - current;
+
+    return React.createElement('div', { className: 'mb-3 last:mb-0' }, // Add margin bottom, remove from last item
+        React.createElement('div', { className: 'flex justify-between items-center mb-1' },
+            React.createElement('span', { className: 'text-sm font-medium text-gray-700 dark:text-gray-300' }, label), // Responsive text size, Dark mode text
+            React.createElement('span', { className: `text-xs font-semibold ${isExceeded ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}` }, // Responsive text size, Dark mode text
+                `${current.toFixed(1)} of ${target.toFixed(1)} ${unit}` // Display current/target with one decimal
+            )
+        ),
+        React.createElement('div', { className: 'w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700' }, // Background bar, Dark mode background
+            React.createElement('div', {
+                className: `${colorClass} h-2.5 rounded-full transition-all duration-500 ease-in-out ${isExceeded ? 'bg-red-600 dark:bg-red-400' : ''}`, // Apply color class, transition, and red if exceeded
+                style: { width: `${percentage}%` }
+            })
+        ),
+        React.createElement('div', { className: 'text-right text-xs mt-1' },
+            isExceeded
+                ? React.createElement('span', { className: 'text-red-600 dark:text-red-400 font-medium' }, `Exceeds By: ${difference.toFixed(1)} ${unit}`) // Dark mode text
+                : React.createElement('span', { className: 'text-gray-600 dark:text-gray-400' }, `Remaining: ${difference.toFixed(1)} ${unit}`) // Dark mode text
+        )
+    );
+};
+
+
 // --- Main App Component ---
 function App(): JSX.Element {
     const [currentDate, setCurrentDate] = useState<string>(getToday());
@@ -182,6 +221,7 @@ function App(): JSX.Element {
     const [showModal, setShowModal] = useState<boolean>(false);
     const [editingMealId, setEditingMealId] = useState<string | null>(null); // State to track which meal is being edited
     const [copyingMeal, setCopyingMeal] = useState<LoggedFoodItem | null>(null); // State to track the meal being copied
+    const [isTotalsMinimized, setIsTotalsMinimized] = useState<boolean>(false); // State to manage minimize/maximize
 
 
     // Modal specific states
@@ -202,6 +242,13 @@ function App(): JSX.Element {
 
     // Ref for the search input for auto-focus
     const searchInputRef = useRef<HTMLInputElement>(null);
+
+    // --- Target Macro/Calorie Values (Example values, you can make these configurable) ---
+    const TARGET_CALORIES = 2200;
+    const TARGET_PROTEIN = 137.5;
+    const TARGET_CARBS = 330;
+    const TARGET_FAT = 36.7;
+    const TARGET_FIBRE = 30; // Example target for fibre
 
 
     // Effect to save meals to localStorage whenever loggedMeals changes
@@ -679,8 +726,9 @@ function App(): JSX.Element {
 
             // Main content area: Centered with max-width
             React.createElement('main', { className: 'w-full max-w-3xl bg-white shadow-2xl rounded-xl p-4 md:p-6' }, // Responsive padding
-                // Date Navigation & Daily Summary
-                React.createElement('section', { className: 'mb-6 p-3 md:p-4 bg-gray-50 rounded-lg shadow' }, // Responsive padding
+                // Date Navigation & Daily Summary (Sticky Section)
+                // Added 'sticky top-0 z-10 bg-gray-50 pb-4' for sticky behavior
+                React.createElement('section', { className: 'mb-6 p-3 md:p-4 bg-gray-50 rounded-lg shadow sticky top-0 z-10 pb-4' }, // Responsive padding, added sticky styles and padding-bottom
                     React.createElement('div', { className: 'flex items-center justify-between mb-4' },
                         React.createElement('button', {
                             onClick: () => changeDate(-1),
@@ -707,27 +755,24 @@ function App(): JSX.Element {
                             }, React.createElement(ChevronRight)
                         )
                     ),
-                    // Daily Totals Grid: Adjusted grid columns and text sizes
-                    React.createElement('div', { className: 'text-center grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4 text-sm md:text-base' }, // Responsive grid and text size
-                         React.createElement('div', {className: 'p-2 bg-white rounded-md shadow-sm'}, // Added styling for clarity
-                            React.createElement('p', { className: 'text-base md:text-xl font-bold text-green-600' }, `${Math.round(dailyTotals.calories)} kcal`), // Responsive text size
-                            React.createElement('p', { className: 'text-xs text-gray-500' }, 'Total Calories') // Responsive text size
-                         ),
-                         React.createElement('div', {className: 'p-2 bg-white rounded-md shadow-sm'}, // Added styling for clarity
-                            React.createElement('p', { className: 'text-base md:text-xl font-bold text-blue-600' }, `${Math.round(dailyTotals.protein)}g`), // Responsive text size
-                            React.createElement('p', { className: 'text-xs text-gray-500' }, 'Protein') // Responsive text size
-                         ),
-                         React.createElement('div', {className: 'p-2 bg-white rounded-md shadow-sm'}, // Added styling for clarity
-                            React.createElement('p', { className: 'text-base md:text-xl font-bold text-orange-600' }, `${Math.round(dailyTotals.carbs)}g`), // Responsive text size
-                            React.createElement('p', { className: 'text-xs text-gray-500' }, 'Carbs') // Responsive text size
-                         ),
-                         React.createElement('div', {className: 'p-2 bg-white rounded-md shadow-sm'}, // Added styling for clarity
-                            React.createElement('p', { className: 'text-base md:text-xl font-bold text-purple-600' }, `${Math.round(dailyTotals.fat)}g`), // Responsive text size
-                            React.createElement('p', { className: 'text-xs text-gray-500' }, 'Fat') // Responsive text size
-                         ),
-                         React.createElement('div', {className: 'p-2 bg-white rounded-md shadow-sm'}, // Added styling for clarity
-                            React.createElement('p', { className: 'text-base md:text-xl font-bold text-pink-600' }, `${Math.round(dailyTotals.fibre)}g`), // Responsive text size
-                            React.createElement('p', { className: 'text-xs text-gray-500' }, 'Fibre') // Responsive text size
+                    // Daily Totals Header with Minimize/Maximize Button
+                    React.createElement('div', { className: 'flex justify-between items-center mb-3 border-b pb-2' },
+                         React.createElement('h3', { className: 'text-lg md:text-xl font-semibold text-gray-700' }, 'Daily Totals'),
+                         React.createElement('button', {
+                             onClick: () => setIsTotalsMinimized(!isTotalsMinimized), // Toggle minimize state
+                             className: 'p-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                         }, isTotalsMinimized ? React.createElement(ChevronDown) : React.createElement(ChevronUp)) // Show down arrow when minimized, up when expanded
+                    ),
+                    // Daily Totals Progress Bars: Conditionally render and use grid for 2 columns when not minimized
+                    React.createElement('div', { className: `mt-4 ${!isTotalsMinimized ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : ''}` }, // Added grid classes for 2 columns on medium screens and up
+                         // Calories always visible
+                         React.createElement(ProgressBar, { label: 'Calories', current: dailyTotals.calories, target: TARGET_CALORIES, unit: 'kcal', colorClass: 'bg-gray-600 dark:bg-gray-300' }), // Gray/Black for Calories
+                         // Other macros visible only when not minimized
+                         !isTotalsMinimized && React.createElement(Fragment, null,
+                             React.createElement(ProgressBar, { label: 'Protein', current: dailyTotals.protein, target: TARGET_PROTEIN, unit: 'g', colorClass: 'bg-blue-600 dark:bg-blue-400' }), // Blue for Protein
+                             React.createElement(ProgressBar, { label: 'Carbs', current: dailyTotals.carbs, target: TARGET_CARBS, unit: 'g', colorClass: 'bg-orange-600 dark:bg-orange-400' }), // Orange for Carbs
+                             React.createElement(ProgressBar, { label: 'Fat', current: dailyTotals.fat, target: TARGET_FAT, unit: 'g', colorClass: 'bg-purple-600 dark:bg-purple-400' }), // Purple for Fat
+                             React.createElement(ProgressBar, { label: 'Fibre', current: dailyTotals.fibre, target: TARGET_FIBRE, unit: 'g', colorClass: 'bg-pink-600 dark:bg-pink-400' }) // Pink for Fibre
                          )
                     )
                 ),
