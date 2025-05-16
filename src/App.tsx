@@ -241,7 +241,7 @@ function App(): JSX.Element {
     const [showModal, setShowModal] = useState<boolean>(false);
     const [editingMealId, setEditingMealId] = useState<string | null>(null); // State to track which meal is being edited
     const [copyingMeal, setCopyingMeal] = useState<LoggedFoodItem | null>(null); // State to track the meal being copied
-    const [isTotalsMinimized, setIsTotalsMinimized] = useState<boolean>(false); // State to manage minimize/maximize
+    const [isTotalsMinimized, setIsTotalsMinimized] = useState<boolean>(true); // State to manage minimize/maximize
 
     // New state for calendar modal visibility
     const [showCalendarModal, setShowCalendarModal] = useState<boolean>(false);
