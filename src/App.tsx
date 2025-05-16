@@ -39,6 +39,7 @@ interface ModalMessage {
     type: 'error' | 'info' | ''; // Message type for styling
 }
 
+type WeightLog = { date: string; weight: number };
 
 // --- Icon Components (SVG) ---
 // Using inline SVG components directly in the JSX for simplicity
@@ -61,6 +62,14 @@ const BarChartIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <rect x="3" y="12" width="4" height="8" rx="1" className="fill-green-200" />
     <rect x="9" y="8" width="4" height="12" rx="1" className="fill-green-400" />
     <rect x="15" y="4" width="4" height="16" rx="1" className="fill-green-600" />
+  </svg>
+);
+// Added icon for weight tracking CTA
+const WeightIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
+    <rect x="3" y="6" width="18" height="14" rx="3" className="fill-blue-100" />
+    <circle cx="12" cy="13" r="4" className="fill-blue-400" />
+    <rect x="10.5" y="9" width="3" height="6" rx="1.5" className="fill-blue-600" />
   </svg>
 );
 
@@ -240,6 +249,18 @@ function App(): JSX.Element {
     // Weekly Average Modal State
     const [showWeeklyModal, setShowWeeklyModal] = useState(false);
 
+    // Weight Tracking Modal State
+    const [showWeightModal, setShowWeightModal] = useState(false);
+    const [weightLogs, setWeightLogs] = useState<WeightLog[]>(() => {
+        try {
+            return JSON.parse(localStorage.getItem('calorieAppWeightLogs_v1') || '[]');
+        } catch {
+            return [];
+        }
+    });
+    const [weightInput, setWeightInput] = useState<string>('');
+    const [weightError, setWeightError] = useState<string>('');
+
     // Modal specific states
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [searchResults, setSearchResults] = useState<FoodItem[]>([]);
@@ -273,6 +294,37 @@ function App(): JSX.Element {
       (loggedMeals[date]?.reduce((sum, meal) => sum + meal.calories, 0)) || 0
     );
     const weeklyAverage = weeklyCalories.reduce((a, b) => a + b, 0) / 7;
+
+    // --- Weight Tracking Logic ---
+    useEffect(() => {
+        localStorage.setItem('calorieAppWeightLogs_v1', JSON.stringify(weightLogs));
+    }, [weightLogs]);
+
+    const handleLogWeight = () => {
+        const weight = parseFloat(weightInput);
+        if (isNaN(weight) || weight <= 0) {
+            setWeightError('Please enter a valid weight.');
+            return;
+        }
+        const today = getToday();
+        setWeightLogs(prev => {
+            const filtered = prev.filter(log => log.date !== today);
+            return [...filtered, { date: today, weight }];
+        });
+        setWeightInput('');
+        setWeightError('');
+        setShowWeightModal(false);
+    };
+
+    const last14Days = Array.from({ length: 14 }, (_, i) => addDays(getToday(), -13 + i));
+    const weightData = last14Days.map(date => {
+        const log = weightLogs.find(l => l.date === date);
+        return { date, weight: log ? log.weight : null };
+    });
+
+    const weightsOnly = weightData.filter(d => d.weight !== null).map(d => d.weight as number);
+    const minWeight = weightsOnly.length ? Math.min(...weightsOnly) : 0;
+    const maxWeight = weightsOnly.length ? Math.max(...weightsOnly) : 100;
 
     // Effect to save meals to localStorage whenever loggedMeals changes
     useEffect(() => {
@@ -861,6 +913,17 @@ function App(): JSX.Element {
                     )
                 ),
 
+                // Weight Log CTA
+                React.createElement('div', { className: 'w-full max-w-3xl flex justify-end mb-2' },
+                    React.createElement('button', {
+                        onClick: () => setShowWeightModal(true),
+                        className: 'flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
+                    },
+                        React.createElement(WeightIcon, { className: 'w-5 h-5' }),
+                        'Log Weight & View Trend'
+                    )
+                ),
+
                 // Meal Sections
                 MEAL_TYPES.map(mealType => {
                     const itemsForMealType = mealsForCurrentDate.filter(meal => meal.mealType === mealType);
@@ -998,6 +1061,96 @@ function App(): JSX.Element {
                         onClick: () => setShowWeeklyModal(false),
                         className: 'mt-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm'
                     }, 'Close')
+                )
+            ),
+
+            // Weight Modal
+            showWeightModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50' },
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col items-center' },
+                    React.createElement('h3', { className: 'text-lg font-bold text-blue-700 mb-2 flex items-center gap-2' },
+                        React.createElement(WeightIcon, { className: 'w-6 h-6' }),
+                        'Log Today\'s Weight'
+                    ),
+                    React.createElement('input', {
+                        type: 'number',
+                        value: weightInput,
+                        onChange: e => setWeightInput(e.target.value),
+                        placeholder: 'Enter weight (kg)',
+                        min: '0',
+                        step: '0.1',
+                        className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm md:text-base mb-2'
+                    }),
+                    weightError && React.createElement('div', { className: 'text-red-600 text-xs mb-2' }, weightError),
+                    React.createElement('div', { className: 'flex gap-2 mt-2 mb-4' },
+                        React.createElement('button', {
+                            onClick: handleLogWeight,
+                            className: 'flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
+                        }, 'Save'),
+                        React.createElement('button', {
+                            onClick: () => { setShowWeightModal(false); setWeightInput(''); setWeightError(''); },
+                            className: 'flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                        }, 'Close')
+                    ),
+                    // Weight Graph inside the modal
+                    React.createElement('div', { className: 'w-full' },
+                        React.createElement('h4', { className: 'text-base font-semibold text-blue-700 mb-2 text-center' }, 'Weight Trend (Last 14 Days)'),
+                        React.createElement('div', { className: 'w-full h-40 md:h-48 flex items-end' },
+                            React.createElement('svg', {
+                                width: '100%',
+                                height: '100%',
+                                viewBox: '0 0 350 120',
+                                className: 'w-full h-full'
+                            },
+                                weightData.map((d, i) =>
+                                    React.createElement('text', {
+                                        key: d.date,
+                                        x: 25 + (i * 25),
+                                        y: 115,
+                                        fontSize: 8,
+                                        fill: '#64748b',
+                                        textAnchor: 'middle'
+                                    }, new Date(d.date + 'T00:00:00').getDate())
+                                ),
+                                [minWeight, maxWeight].map((w, i) =>
+                                    React.createElement(React.Fragment, { key: i },
+                                        React.createElement('line', {
+                                            x1: 20, x2: 340, y1: 10 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))), y2: 10 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))),
+                                            stroke: '#e5e7eb', strokeWidth: 1
+                                        }),
+                                        React.createElement('text', {
+                                            x: 10, y: 14 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))),
+                                            fontSize: 8, fill: '#64748b', textAnchor: 'end'
+                                        }, w)
+                                    )
+                                ),
+                                React.createElement('polyline', {
+                                    fill: 'none',
+                                    stroke: '#2563eb',
+                                    strokeWidth: 2,
+                                    points: weightData.map((d, i) => {
+                                        if (d.weight === null) return '';
+                                        const x = 25 + (i * 25);
+                                        const y = 10 + (100 * (1 - ((d.weight - minWeight) / ((maxWeight - minWeight) || 1))));
+                                        return `${x},${y}`;
+                                    }).filter(Boolean).join(' ')
+                                }),
+                                weightData.map((d, i) =>
+                                    d.weight !== null && React.createElement('circle', {
+                                        key: d.date,
+                                        cx: 25 + (i * 25),
+                                        cy: 10 + (100 * (1 - ((d.weight - minWeight) / ((maxWeight - minWeight) || 1)))),
+                                        r: 3,
+                                        fill: '#2563eb',
+                                        stroke: '#fff',
+                                        strokeWidth: 1
+                                    })
+                                )
+                            )
+                        ),
+                        React.createElement('div', { className: 'text-xs text-gray-500 mt-2 text-center' },
+                            'Tip: Log your weight daily to see your trend. Only the last 14 days are shown.'
+                        )
+                    )
                 )
             ),
 
@@ -1174,7 +1327,7 @@ function App(): JSX.Element {
                                             className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
                                         })
                                     ),
-                                     React.createElement('div', {}, // Fibre input field
+                                    React.createElement('div', {}, // Fibre input field
                                          // MODIFIED: Removed dark mode text color
                                          React.createElement('label', { htmlFor: 'customFibre', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Fibre (g per unit)'), // Label for Fibre, Added transition
                                          // MODIFIED: Removed dark mode colors
@@ -1185,72 +1338,43 @@ function App(): JSX.Element {
                                             className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
                                         })
                                     )
-                                ) as React.ReactElement // Cast to React.ReactElement
-                             )
+                                )
+                            )
                         ),
 
-
-                        React.createElement('div', { className: 'mb-4 flex-shrink-0' }, // Added margin-bottom to separate from calculated values, flex-shrink-0
-                            // MODIFIED: Removed dark mode text color
-                            React.createElement('label', { htmlFor: 'quantity', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, getQuantityLabel()), // Dynamic quantity label, Added transition
-                            // MODIFIED: Removed dark mode colors
+                        // Quantity input and calculated nutrients (always shown)
+                        React.createElement('div', { className: 'mb-4' },
+                            React.createElement('label', { htmlFor: 'quantity', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, getQuantityLabel()),
                             React.createElement('input', {
-                                type: 'number', id: 'quantity', value: quantity, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setQuantity(e.target.value),
-                                min: '0.1', step: '0.1', disabled: isLoadingSearch || (!selectedFoodForModal && !showCustomFoodInputs), // Disable if loading or no food/custom option is ready
-                                className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                            }) as React.ReactElement // Cast to React.ReactElement
-                        ),
-
-                        // Display calculated nutrients in real-time
-                        // MODIFIED: Removed dark mode colors
-                        (selectedFoodForModal || showCustomFoodInputs) && React.createElement('div', { className: 'mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200 text-sm text-gray-700 flex-shrink-0 transition-colors' }, // flex-shrink-0, Added transition
-                             // MODIFIED: Removed dark mode text color
-                             React.createElement('h4', { className: 'font-semibold text-blue-700 mb-2 text-sm md:text-base transition-colors' }, 'Calculated for this quantity:'), // Responsive text size, Added transition
-                             React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs md:text-sm' }, // Updated grid columns for better spacing, Responsive text size
-                                 // MODIFIED: Removed dark mode text color
-                                 React.createElement('div', {}, React.createElement('p', { className: 'font-bold' }, `${calculatedNutrients.calories} kcal`), React.createElement('p', { className: 'text-xs text-gray-600 transition-colors' }, 'Cals')), // Responsive text size, Added transition
-                                 // MODIFIED: Removed dark mode text color
-                                 React.createElement('div', {}, React.createElement('p', { className: 'font-bold' }, `${calculatedNutrients.protein}g`), React.createElement('p', { className: 'text-xs text-gray-600 transition-colors' }, 'Protein')), // Responsive text size, Added transition
-                                 // MODIFIED: Removed dark mode text color
-                                 React.createElement('div', {}, React.createElement('p', { className: 'font-bold' }, `${calculatedNutrients.carbs}g`), React.createElement('p', { className: 'text-xs text-gray-600 transition-colors' }, 'Carbs')), // Responsive text size, Added transition
-                                 // MODIFIED: Removed dark mode text color
-                                 React.createElement('div', {}, React.createElement('p', { className: 'font-bold' }, `${calculatedNutrients.fat}g`), React.createElement('p', { className: 'text-xs text-gray-600 transition-colors' }, 'Fat')), // Responsive text size, Added transition
-                                 // MODIFIED: Removed dark mode text color
-                                 React.createElement('div', {}, React.createElement('p', { className: 'font-bold' }, `${calculatedNutrients.fibre}g`), React.createElement('p', { className: 'text-xs text-gray-600 transition-colors' }, 'Fibre')) // Display Fibre, Responsive text size, Added transition
-                             )
+                                type: 'number',
+                                id: 'quantity',
+                                value: quantity,
+                                onChange: (e: React.ChangeEvent<HTMLInputElement>) => setQuantity(e.target.value),
+                                min: '0.1',
+                                step: '0.1',
+                                className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base'
+                            }),
+                            React.createElement('div', { className: 'mt-2 text-xs text-gray-600 transition-colors' },
+                                `Calories: ${calculatedNutrients.calories} kcal | Protein: ${calculatedNutrients.protein}g | Carbs: ${calculatedNutrients.carbs}g | Fat: ${calculatedNutrients.fat}g | Fibre: ${calculatedNutrients.fibre}g`
+                            )
                         )
                     ),
 
-
-                    // Modal action buttons (Footer)
-                    // MODIFIED: Removed dark mode border color
-                    React.createElement('div', { className: 'flex flex-col sm:flex-row gap-3 mt-auto flex-shrink-0 pt-4 border-t border-gray-200' }, // Added mt-auto, flex-shrink-0, pt-4, border-t
+                    // Modal Footer: Save/Cancel buttons
+                    React.createElement('div', { className: 'flex gap-2 mt-4 flex-shrink-0' },
                         React.createElement('button', {
-                            onClick: handleSaveFoodEntry, // Use the new save function
-                            disabled: isLoadingSearch || parseFloat(quantity as string) <= 0 || isNaN(parseFloat(quantity as string)) || (!selectedFoodForModal && !showCustomFoodInputs) || (showCustomFoodInputs && (!customFoodName.trim() || !customUnit.trim() || isNaN(parseFloat(customCalories as string)) || isNaN(parseFloat(customProtein as string)) || isNaN(parseFloat(customCarbs as string)) || isNaN(parseFloat(customFat as string)) || isNaN(parseFloat(customFibre as string)) || parseFloat(customCalories as string) < 0 || parseFloat(customProtein as string) < 0 || parseFloat(customCarbs as string) < 0 || parseFloat(customFat as string) < 0 || parseFloat(customFibre as string) < 0)), // Complex disable logic including fibre
-                            className: 'flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm md:text-base' // Responsive text size
-                            }, editingMealId ? 'Save Changes' : (copyingMeal ? 'Add Copied Food' : 'Add Food') // Dynamic button text
-                        ),
-                        // MODIFIED: Removed dark mode colors
+                            onClick: handleSaveFoodEntry,
+                            className: 'flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50'
+                        }, editingMealId ? 'Save Changes' : 'Add Food'),
                         React.createElement('button', {
-                            onClick: closeModal, // Use the new closeModal function
-                            className: 'flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 text-sm md:text-base' // Responsive text size
-                            }, 'Cancel'
-                        )
+                            onClick: closeModal,
+                            className: 'flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                        }, 'Cancel')
                     )
                 )
-            ),
-            // Footer: Adjusted text size
-            React.createElement('footer', { className: 'w-full max-w-3xl mt-8 text-center text-xs md:text-sm' }, // Responsive text size
-                // MODIFIED: Removed dark mode text color
-                React.createElement('p', { className: 'text-gray-500 transition-colors' }, 'Nutrient data is for demonstration and may not be accurate. Always consult official sources or a nutritionist.') // Added transition
             )
         )
     );
 }
 
-export default App; // Export the component as default
-
-// If you are still encountering "Cannot find namespace 'JSX'" errors,
-// you might need to install the React type definitions:
-// npm install --save-dev @types/react @types/react-dom
+export default App;
