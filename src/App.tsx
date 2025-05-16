@@ -696,7 +696,8 @@ function App(): JSX.Element {
                             // Show "Go to Today" button only if not on today's date
                             !isToday && React.createElement('button', {
                                 onClick: () => setCurrentDate(getToday()),
-                                className: 'text-xs md:text-sm text-green-600 hover:text-green-800 font-medium mt-1 focus:outline-none' // Responsive text size
+                                // MODIFIED: Added light background, dark text for both modes. Added padding & rounding.
+                                className: 'text-xs md:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-100 dark:text-gray-700 dark:hover:bg-gray-200 font-medium mt-1 focus:outline-none px-3 py-1 rounded-md transition-colors'
                             }, 'Go to Today')
                         ),
                         React.createElement('button', {
@@ -776,19 +777,22 @@ function App(): JSX.Element {
                                             // Copy Button
                                             React.createElement('button', {
                                                 onClick: () => openCopyModal(meal), // Open modal for copying
-                                                className: 'text-green-500 hover:text-green-700 p-1 rounded-full hover:bg-green-100 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400'
+                                                // MODIFIED: Added bg-transparent, adjusted text colors for light/dark modes
+                                                className: 'bg-transparent text-green-600 dark:bg-transparent dark:text-green-500 hover:text-green-700 hover:bg-green-100 p-1 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-400'
                                                 }, React.createElement(CopyIcon)
                                             ),
                                             // Edit Button
                                             React.createElement('button', {
                                                 onClick: () => openEditModal(meal), // Open modal for editing
-                                                className: 'text-blue-500 hover:text-blue-700 p-1 rounded-full hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400'
+                                                // MODIFIED: Added bg-transparent, adjusted text colors for light/dark modes
+                                                className: 'bg-transparent text-blue-600 dark:bg-transparent dark:text-blue-500 hover:text-blue-700 hover:bg-blue-100 p-1 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400'
                                                 }, React.createElement(EditIcon)
                                             ),
                                             // Delete Button
                                             React.createElement('button', {
                                                 onClick: () => handleDeleteFood(meal.id),
-                                                className: 'text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400'
+                                                // MODIFIED: Added bg-transparent, adjusted text colors for light/dark modes
+                                                className: 'bg-transparent text-red-600 dark:bg-transparent dark:text-red-500 hover:text-red-700 hover:bg-red-100 p-1 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400'
                                                 }, React.createElement(Trash2)
                                             )
                                         )
