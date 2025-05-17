@@ -64,7 +64,7 @@ type FoodModalProps = {
     setQuantity: (val: string) => void;
     getQuantityLabel: () => string;
     calculatedNutrients: { calories: number; protein: number; carbs: number; fat: number; fibre: number };
-    handleSaveFoodEntry: (mealType: MealType, foodData: LoggedFoodItem) => void;
+    handleSaveFoodEntry: (foodData: LoggedFoodItem) => void;
     closeModal: () => void;
     MEAL_SUGGESTIONS: Record<string, string[]>;
 };
@@ -285,9 +285,7 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         type="number"
                                         id="customProtein"
                                         placeholder="e.g., 20"
-                                        // --- FIX: Format the value for display ---
                                         value={parseFloat(customProtein as string).toFixed(1)}
-                                        // --- End Fix ---
                                         onChange={e => setCustomProtein(e.target.value)}
                                         min="0"
                                         step="0.1"
@@ -300,9 +298,7 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         type="number"
                                         id="customCarbs"
                                         placeholder="e.g., 30"
-                                        // --- FIX: Format the value for display ---
                                         value={parseFloat(customCarbs as string).toFixed(1)}
-                                        // --- End Fix ---
                                         onChange={e => setCustomCarbs(e.target.value)}
                                         min="0"
                                         step="0.1"
@@ -315,9 +311,7 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         type="number"
                                         id="customFat"
                                         placeholder="e.g., 15"
-                                        // --- FIX: Format the value for display ---
                                         value={parseFloat(customFat as string).toFixed(1)}
-                                        // --- End Fix ---
                                         onChange={e => setCustomFat(e.target.value)}
                                         min="0"
                                         step="0.1"
@@ -330,9 +324,7 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         type="number"
                                         id="customFibre"
                                         placeholder="e.g., 5"
-                                        // --- FIX: Format the value for display ---
                                         value={parseFloat(customFibre as string).toFixed(1)}
-                                        // --- End Fix ---
                                         onChange={e => setCustomFibre(e.target.value)}
                                         min="0"
                                         step="0.1"
@@ -366,33 +358,28 @@ const FoodModal: React.FC<FoodModalProps> = ({
                             if (editingMealId) {
                                 // EDITING an existing item
                                 foodDataToSave = {
-                                    id: editingMealId, // Use the existing ID
+                                    id: editingMealId,
                                     mealType: selectedMealType,
-                                    foodName: customFoodName, // Custom fields are populated by openEditModal
+                                    foodName: customFoodName,
                                     quantity: Number(quantity),
-                                    unit: customUnit,         // Custom fields are populated by openEditModal
-                                    calories: calculatedNutrients.calories, // Use total calculated nutrients
+                                    unit: customUnit,
+                                    calories: calculatedNutrients.calories,
                                     protein: calculatedNutrients.protein,
                                     carbs: calculatedNutrients.carbs,
                                     fat: calculatedNutrients.fat,
                                     fibre: calculatedNutrients.fibre,
-                                    // Decide how to handle imageUrl for edited items.
-                                    // For now, if it's treated as a custom edit, imageUrl might be undefined
-                                    // or you could try to preserve it if the original item had one and customFoodName hasn't changed significantly.
-                                    // Simplest for now:
                                     imageUrl: selectedFoodForModal?.imageUrl,
                                 };
                             } else {
                                 // ADDING a new item
                                 if (selectedFoodForModal) {
-                                    // Adding a new item selected from search results
                                     foodDataToSave = {
-                                        id: Date.now().toString() + Math.random().toString(36).slice(2, 8), // New ID
+                                        id: Date.now().toString() + Math.random().toString(36).slice(2, 8),
                                         mealType: selectedMealType,
                                         foodName: selectedFoodForModal.name,
                                         quantity: Number(quantity),
                                         unit: selectedFoodForModal.unit,
-                                        calories: calculatedNutrients.calories, // Use total calculated nutrients
+                                        calories: calculatedNutrients.calories,
                                         protein: calculatedNutrients.protein,
                                         carbs: calculatedNutrients.carbs,
                                         fat: calculatedNutrients.fat,
@@ -400,23 +387,22 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         imageUrl: selectedFoodForModal.imageUrl,
                                     };
                                 } else {
-                                    // Adding a new custom item
                                     foodDataToSave = {
-                                        id: Date.now().toString() + Math.random().toString(36).slice(2, 8), // New ID
+                                        id: Date.now().toString() + Math.random().toString(36).slice(2, 8),
                                         mealType: selectedMealType,
                                         foodName: customFoodName,
                                         quantity: Number(quantity),
                                         unit: customUnit,
-                                        calories: calculatedNutrients.calories, // Use total calculated nutrients
+                                        calories: calculatedNutrients.calories,
                                         protein: calculatedNutrients.protein,
                                         carbs: calculatedNutrients.carbs,
                                         fat: calculatedNutrients.fat,
                                         fibre: calculatedNutrients.fibre,
-                                        imageUrl: undefined, // Custom items typically don't have an image URL
+                                        imageUrl: undefined,
                                     };
                                 }
                             }
-                            handleSaveFoodEntry(selectedMealType, foodDataToSave);
+                            handleSaveFoodEntry(foodDataToSave);
                             closeModal();
                         }}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"

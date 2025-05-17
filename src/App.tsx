@@ -272,7 +272,7 @@ function App(): JSX.Element {
 
 
     // Function to handle saving (both adding and editing)
-    const handleSaveFoodEntry = (mealType: MealType, foodData: LoggedFoodItem) => {
+    const handleSaveFoodEntry = (foodData: LoggedFoodItem) => { // Removed mealType parameter
         setLoggedMeals(prev => {
             const prevMealsForDate = prev[currentDate] || [];
             let updatedMealsForDate;
