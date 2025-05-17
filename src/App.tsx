@@ -847,8 +847,8 @@ function App(): JSX.Element {
 
                 // Message when viewing past dates
                 // MODIFIED: Removed dark mode colors
-                !isToday && React.createElement('div', { className: 'mb-6 text-center p-3 bg-blue-100 text-blue-700 rounded-md text-sm transition-colors' }, // Responsive text size, Added transition
-                    React.createElement('p', { className: 'text-sm' }, 'You are viewing a past date. Food items can only be logged for today.')
+                !isToday && React.createElement('div', { className: 'mb-6 text-center p-3 bg-blue-100 text-blue-700 rounded-md text-sm transition-colors' },
+                    React.createElement('p', { className: 'text-sm' }, 'You are viewing a past date. You can log or edit food items for this day.')
                 ),
 
                 // Meal Sections
@@ -861,7 +861,7 @@ function App(): JSX.Element {
                             // MODIFIED: Removed dark mode text color
                             React.createElement('h3', { className: 'text-lg md:text-xl font-semibold text-green-700 transition-colors' }, mealType), // Responsive text size, Added transition
                             // Add Food button for each section (only for today)
-                            isToday && React.createElement('button', {
+                            React.createElement('button', {
                                 onClick: () => openAddModal(mealType), // Pass mealType to the modal
                                 className: 'p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-400'
                             }, React.createElement(PlusCircle, { className: 'w-5 h-5' }))
