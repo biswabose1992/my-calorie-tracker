@@ -1,4 +1,4 @@
-# Daily Calorie & Nutrient Tracker
+# Daily Calorie & Nutrition Tracker
 
 A simple web app to track your daily calories, macros, and weight trends. Built with React, TypeScript, Vite, and Tailwind CSS.
 

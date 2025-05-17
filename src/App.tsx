@@ -43,6 +43,7 @@ import {
     BarChartIcon,
     WeightIcon
 } from './components/Icons'; // Import Icons from components folder
+import CalendarModal from './modals/CalendarModal';
 
 // --- Additional Type Definitions (if not in types.ts) ---
 // If WeightLog is not in types.ts, define it here or move it to types.ts
@@ -727,7 +728,7 @@ function App(): JSX.Element {
                 // MODIFIED: Removed dark mode text color class
                 React.createElement('h1', { className: 'text-3xl md:text-4xl font-bold text-green-700 flex items-center justify-center transition-colors' }, // Responsive text size, Added transition
                     React.createElement(Utensils, { className: 'mr-2 md:mr-3 w-8 h-8 md:w-10 md:h-10' }), // Responsive icon size
-                    'Daily Calorie & Nutrient Tracker'
+                    'Daily Calorie & Nutrition Tracker'
                 )
             ),
 
@@ -913,38 +914,13 @@ function App(): JSX.Element {
             ),
 
             // Calendar Modal
-            showCalendarModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 backdrop-blur-sm' },
-                // MODIFIED: Removed dark mode background
-                React.createElement('div', { className: 'bg-white p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-sm transform transition-all duration-300 ease-out scale-100' },
-                    // MODIFIED: Removed dark mode text color
-                    React.createElement('h3', { className: 'text-lg md:text-xl font-semibold text-gray-800 mb-4 text-center' }, 'Select Date'), // Added dark mode text color
-                    React.createElement('div', { className: 'grid grid-cols-7 gap-1 text-center text-xs md:text-sm mb-4' }, // Responsive text size
-                        // MODIFIED: Removed dark mode text color
-                        daysOfWeek.map(day => React.createElement('div', { key: day, className: 'font-medium text-gray-600' }, day))
-                    ),
-                    React.createElement('div', { className: 'grid grid-cols-7 gap-1 text-center text-sm md:text-base' }, // Responsive text size
-                        getCalendarDays().map(({ date, display, isCurrent }) =>
-                            // MODIFIED: Removed dark mode colors
-                            React.createElement('button', {
-                                key: date,
-                                onClick: () => handleDateSelect(date),
-                                disabled: new Date(date) > new Date(getToday()), // Disable future dates (beyond today)
-                                className: `p-2 rounded-full transition-colors w-full aspect-square flex items-center justify-center
-                                            ${isCurrent ? 'bg-green-600 text-white font-bold' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
-                                            ${new Date(date) > new Date(getToday()) ? 'disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed' : ''}
-                                            focus:outline-none focus:ring-2 focus:ring-green-400`
-                            }, display)
-                        )
-                    ),
-                    React.createElement('div', { className: 'mt-6 text-right' },
-                        // MODIFIED: Removed dark mode colors
-                        React.createElement('button', {
-                            onClick: () => setShowCalendarModal(false),
-                            className: 'bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm md:text-base' // Responsive text size
-                        }, 'Close')
-                    )
-                )
-            ),
+            <CalendarModal
+                show={showCalendarModal}
+                daysOfWeek={daysOfWeek}
+                getCalendarDays={getCalendarDays}
+                handleDateSelect={handleDateSelect}
+                onClose={() => setShowCalendarModal(false)}
+            />,
 
             // Weekly Average Modal
             showWeeklyModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50' },
