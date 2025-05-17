@@ -34,8 +34,6 @@ import {
     PlusCircle,
     Trash2,
     Utensils,
-    SearchIcon,
-    LoaderIcon,
     EditIcon,
     CopyIcon,
     ChevronDown,
@@ -43,7 +41,11 @@ import {
     BarChartIcon,
     WeightIcon
 } from './components/Icons'; // Import Icons from components folder
+import WeeklyAverageModal from './modals/WeeklyAverageModal';
 import CalendarModal from './modals/CalendarModal';
+import WeightModal from './modals/WeightModal';
+import FoodModal from './modals/FoodModal';
+import CopyDayTemplateModal from './modals/CopyDayTemplateModal';
 
 // --- Additional Type Definitions (if not in types.ts) ---
 // If WeightLog is not in types.ts, define it here or move it to types.ts
@@ -914,465 +916,94 @@ function App(): JSX.Element {
             ),
 
             // Calendar Modal
-            <CalendarModal
-                show={showCalendarModal}
-                daysOfWeek={daysOfWeek}
-                getCalendarDays={getCalendarDays}
-                handleDateSelect={handleDateSelect}
-                onClose={() => setShowCalendarModal(false)}
-            />,
-
-            // Weekly Average Modal
-            showWeeklyModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50' },
-                React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-xs flex flex-col items-center' },
-                    React.createElement('h3', { className: 'text-lg font-bold text-green-700 mb-2 flex items-center gap-2' },
-                        React.createElement(BarChartIcon, { className: 'w-6 h-6' }),
-                        'Weekly Calorie Average'
-                    ),
-                    React.createElement('div', { className: 'text-4xl font-extrabold text-green-600 mb-2' },
-                        Math.round(weeklyAverage), ' kcal'
-                    ),
-                    React.createElement('div', { className: 'w-full mt-2 mb-4' },
-                        React.createElement('table', { className: 'w-full text-xs text-gray-700' },
-                            React.createElement('tbody', null,
-                                last7Days.map((date, idx) =>
-                                    React.createElement('tr', { key: date },
-                                        React.createElement('td', { className: 'pr-2 py-1 text-left' },
-                                            new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-                                        ),
-                                        React.createElement('td', { className: 'pl-2 py-1 font-semibold text-right' },
-                                            weeklyCalories[idx], ' kcal'
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    ),
-                    React.createElement('button', {
-                        onClick: () => setShowWeeklyModal(false),
-                        className: 'mt-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm'
-                    }, 'Close')
-                )
+            React.createElement(React.Fragment, null,
+                React.createElement(CalendarModal, {
+                    show: showCalendarModal,
+                    daysOfWeek: daysOfWeek,
+                    getCalendarDays: getCalendarDays,
+                    handleDateSelect: handleDateSelect,
+                    onClose: () => setShowCalendarModal(false)
+                }),
+                React.createElement(WeeklyAverageModal, {
+                    show: showWeeklyModal,
+                    weeklyAverage: weeklyAverage,
+                    last7Days: last7Days,
+                    weeklyCalories: weeklyCalories,
+                    onClose: () => setShowWeeklyModal(false)
+                })
             ),
 
             // Weight Modal
-            showWeightModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50' },
-                React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col items-center' },
-                    React.createElement('h3', { className: 'text-lg font-bold text-blue-700 mb-4 flex items-center gap-2' }, // Increased bottom margin
-                        React.createElement(WeightIcon, { className: 'w-6 h-6' }),
-                        'Log Weight & View Trend' // Changed title slightly
-                    ),
-                    // Date input for weight logging
-                    React.createElement('div', { className: 'w-full mb-4' }, // Added container for date picker
-                        React.createElement('label', { htmlFor: 'weightDate', className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Select Date:'),
-                        React.createElement('input', {
-                            type: 'date',
-                            id: 'weightDate',
-                            value: weightDate,
-                            max: getToday(), // Prevent logging weight for future dates
-                            onChange: e => setWeightDate(e.target.value),
-                            className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm md:text-base'
-                        })
-                    ),
-                    React.createElement('input', {
-                        type: 'number',
-                        value: weightInput,
-                        onChange: e => setWeightInput(e.target.value),
-                        placeholder: 'Enter weight (kg)',
-                        min: '0',
-                        step: '0.1',
-                        className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm md:text-base mb-2'
-                    }),
-                    weightError && React.createElement('div', { className: 'text-red-600 text-xs mb-2' }, weightError),
-                    // Adjusted button padding and removed flex-1 for narrower buttons
-                    React.createElement('div', { className: 'flex gap-2 mt-2 mb-6 justify-center' }, // Increased bottom margin, centered buttons
-                        React.createElement('button', {
-                            onClick: handleLogWeight,
-                            className: 'bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-sm' // Reduced padding, smaller text
-                        }, 'Save Weight'), // Changed button text
-                        React.createElement('button', {
-                            onClick: () => { setShowWeightModal(false); setWeightInput(''); setWeightError(''); },
-                            className: 'bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm' // Reduced padding, smaller text
-                        }, 'Close')
-                    ),
-                    // Weight Graph inside the modal - Enhanced Design and Scrollable
-                    // Added overflow-x-auto to the container div and assigned ref
-                    React.createElement('div', { className: 'w-full bg-purple-100 p-4 rounded-lg shadow-inner overflow-x-auto', ref: weightGraphContainerRef }, // Added light purple background, padding, rounded corners, inner shadow, and horizontal overflow, Added ref
-                        React.createElement('h4', { className: 'text-base font-semibold text-purple-800 mb-4 text-center' }, 'Weight Trend (Last 14 Days)'), // Purple text
-                        // Set a fixed width on the SVG to enable scrolling
-                        React.createElement('div', { className: 'w-full h-48 md:h-56 flex items-end relative' }, // Increased height, added relative for absolute positioning
-                            // SVG Container
-                            // Increased height of SVG to make space for date labels below the graph line
-                            React.createElement('svg', {
-                                width: '700', // Set a fixed width wider than the container
-                                height: '150', // Increased height to accommodate date labels
-                                viewBox: '0 0 700 150', // Adjusted viewBox to match the new height
-                                preserveAspectRatio: "none", // Allow stretching
-                                className: 'h-full absolute inset-0' // Position absolutely to fill container height, width is fixed
-                            },
-                                // Y-axis Grid Lines and Labels - Adjusted x position for labels
-                                React.createElement(
-                                    React.Fragment,
-                                    null,
-                                    // Generate 3-4 horizontal grid lines and labels
-                                    Array.from({ length: 4 }).map((_, i, arr) => {
-                                        const weightValue = minWeight + (i / (arr.length - 1)) * (maxWeight - minWeight);
-                                        // Adjusted yPosition calculation based on new SVG height (150 instead of 120)
-                                        const yPosition = 10 + (100 * (1 - (weightValue - minWeight) / ((maxWeight - minWeight) || 1)));
-                                        return React.createElement(React.Fragment, { key: `y-axis-${i}` },
-                                            React.createElement('line', {
-                                                x1: 30, x2: 670, y1: yPosition, y2: yPosition, // Adjusted x2 to match new SVG width
-                                                stroke: '#dadae0', // Lighter grid line color
-                                                strokeWidth: 0.5
-                                            }),
-                                            React.createElement('text', {
-                                                x: 25, // Adjusted x position slightly left of the line start
-                                                y: yPosition + 3, // Vertically align text
-                                                fontSize: 8,
-                                                fill: '#64748b', // Text color
-                                                textAnchor: 'end'
-                                            }, weightValue.toFixed(1)) // Display weight value
-                                        );
-                                    })
-                                ),
-                                // X-axis Labels (Days) - Adjusted vertical position, font size, and x position
-                                weightData.map((d, i) => {
-                                    const xPosition = 30 + (i * (640 / (weightData.length - 1 || 1))); // Calculate x position based on new width and number of points
-                                    return React.createElement('text', {
-                                        key: d.date,
-                                        x: xPosition, // Position based on calculated xPosition
-                                        y: 145, // Increased vertical position to make space below the graph line
-                                        fontSize: 10, // Increased font size
-                                        fill: '#4b5563', // Darker text color for better visibility
-                                        textAnchor: 'middle' // Center text below the point
-                                    }, new Date(d.date + 'T00:00:00').getDate()); // Display just the day number
-                                }),
-                                // Weight Line - Adjusted x position
-                                React.createElement('polyline', {
-                                    fill: 'none',
-                                    stroke: '#6d28d9', // Purple line color
-                                    strokeWidth: 2.5, // Thicker line
-                                    points: weightData.map((d, i) => {
-                                        if (d.weight === null) return '';
-                                        const x = 30 + (i * (640 / (weightData.length - 1 || 1))); // Calculate x position based on new width
-                                        // Adjusted y calculation based on new SVG height (150 instead of 120)
-                                        const y = 10 + (100 * (1 - ((d.weight - minWeight) / ((maxWeight - minWeight) || 1))));
-                                        return `${x},${y}`;
-                                    }).filter(Boolean).join(' ')
-                                }),
-                                // Data Points (Circles) - Adjusted cx position
-                                weightData.map((d, i) =>
-                                    d.weight !== null && React.createElement('circle', {
-                                        key: d.date,
-                                        cx: 30 + (i * (640 / (weightData.length - 1 || 1))), // Calculate cx position based on new width
-                                        cy: 10 + (100 * (1 - ((d.weight - minWeight) / ((maxWeight - minWeight) || 1)))),
-                                        r: 4, // Larger circle radius
-                                        fill: '#8b5cf6', // Lighter purple fill
-                                        stroke: '#ffffff', // White stroke
-                                        strokeWidth: 1.5 // Thicker stroke
-                                    })
-                                )
-                            )
-                        ),
-                        React.createElement('div', { className: 'text-xs text-gray-500 mt-4 text-center' }, // Increased top margin
-                            'Tip: Log your weight daily to see your trend. Only the last 14 days are shown.'
-                        )
-                    )
-                )
-            ),
+            React.createElement(WeightModal, {
+                show: showWeightModal,
+                weightDate: weightDate,
+                setWeightDate: setWeightDate,
+                weightInput: weightInput,
+                setWeightInput: setWeightInput,
+                weightError: weightError,
+                handleLogWeight: handleLogWeight,
+                onClose: () => { setShowWeightModal(false); setWeightInput(''); setWeightError(''); },
+                weightData: weightData,
+                minWeight: minWeight,
+                maxWeight: maxWeight,
+                weightGraphContainerRef: weightGraphContainerRef
+            }),
 
             // Modal for Adding/Editing Food
-            showModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 backdrop-blur-sm' },// Debugging log
-                // Modal content container: Added flex-col and h-full to manage vertical space
-                // MODIFIED: Removed dark mode background
-                React.createElement('div', { className: 'bg-white p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300 ease-out scale-100 flex flex-col h-full max-h-[90vh]' }, // Adjusted max-h
-                    // Modal Header: Adjusted text size
-                    // MODIFIED: Removed dark mode text color
-                    React.createElement('h2', { className: 'text-xl md:text-2xl font-semibold text-gray-800 mb-6 text-center flex-shrink-0' }, getModalTitle()), // Dynamic title
-
-                    // Modal message area: Adjusted text size
-                    // MODIFIED: Removed dark mode colors
-                    modalMessage.text && React.createElement('div', {
-                        className: `p-3 mb-4 rounded-md text-sm ${modalMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'} flex-shrink-0 transition-colors` // flex-shrink-0, Added transition
-                    }, modalMessage.text),
-
-                    // Modal Body: Added overflow-y-auto and flex-grow
-                    React.createElement('div', { className: 'overflow-y-auto flex-grow pr-2' }, // Added pr-2 for scrollbar spacing
-                        React.createElement('div', { className: 'mb-4' },
-                            // MODIFIED: Removed dark mode text color
-                            React.createElement('label', { htmlFor: 'mealType', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Meal Type'), // Added transition
-                            // MODIFIED: Removed dark mode colors
-                            React.createElement('select', {
-                                id: 'mealType', value: selectedMealType, onChange: (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedMealType(e.target.value as MealType), // Cast value to MealType
-                                className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                            }, MEAL_TYPES.map(type => React.createElement('option', { key: type, value: type }, type)))
-                        ),
-
-                        // Search or Custom Input section
-                        !editingMealId ? ( // Show search only when adding or copying
-                            React.createElement('div', { className: 'mb-4' },
-                                // MODIFIED: Removed dark mode text color
-                                React.createElement('label', { htmlFor: 'foodSearch', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Search Food or Enter Custom'), // Added transition
-                                React.createElement('div', { className: 'relative flex items-center' },
-                                    // MODIFIED: Removed dark mode colors
-                                    React.createElement('input', {
-                                        type: 'text', id: 'foodSearch', placeholder: 'Type to search or add custom...',
-                                        value: searchTerm, onChange: (e: React.ChangeEvent<HTMLInputElement>) => { setSearchTerm(e.target.value); setSelectedFoodForModal(null); setQuantity(1); }, // Reset quantity when typing in search
-                                        ref: searchInputRef, // Attach ref to the search input
-                                        className: 'w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                                    }) as React.ReactElement, // Cast to React.ReactElement
-                                    // MODIFIED: Removed dark mode text color
-                                    React.createElement('div', { className: 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors' }, React.createElement(SearchIcon)) // Added transition
-                                )
-                            )
-                        ) : null, // Hide search when editing
-
-                        // Search Results / Loader / No Results / Suggestions (Show only when adding and search term is present or empty)
-                        !editingMealId && ( // Show this section if adding and search is active or suggestions are loaded
-                            React.createElement('div', { className: 'mb-4' }, // Removed fixed height and overflow here, handled by parent
-                                // MODIFIED: Removed dark mode text color
-                                isLoadingSearch && React.createElement('div', { className: 'flex justify-center items-center p-4' }, React.createElement(LoaderIcon, { className: 'text-green-500 w-8 h-8 animate-spin' }), React.createElement('span', { className: 'ml-2 text-gray-600 text-sm transition-colors' }, 'Searching...')), // Responsive text size, Added transition
-                                // MODIFIED: Removed dark mode text color
-                                !isLoadingSearch && searchResults.length === 0 && searchTerm.trim() && React.createElement('p', { className: 'text-gray-500 p-2 text-center text-sm transition-colors' }, `No food items found for "${searchTerm}". Enter details below to add a custom item.`), // Responsive text size, Added transition
-                                // MODIFIED: Removed dark mode text color
-                                !isLoadingSearch && !searchTerm.trim() && !editingMealId && React.createElement(
-                                    React.Fragment,
-                                    null,
-                                    React.createElement('p', { className: 'text-gray-500 p-2 text-center text-sm transition-colors' }, `Suggested for ${selectedMealType}:`),
-                                    React.createElement('ul', { className: 'flex flex-wrap gap-2 justify-center mt-2' },
-                                        (MEAL_SUGGESTIONS[selectedMealType] || []).map(suggestion =>
-                                            React.createElement('li', { key: suggestion },
-                                                React.createElement('button', {
-                                                    type: 'button',
-                                                    className: 'px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded-full text-xs font-medium transition-colors',
-                                                    onClick: () => setSearchTerm(suggestion)
-                                                }, suggestion)
-                                            )
-                                        )
-                                    )
-                                ), // Message for suggestions, Responsive text size, Added transition
-                                // MODIFIED: Removed dark mode border and background
-                                !isLoadingSearch && searchResults.length > 0 && React.createElement('ul', { className: 'space-y-1 border border-gray-200 rounded-md p-1 bg-gray-50 transition-colors' }, // Added transition
-                                    searchResults.map(food => React.createElement('li', {
-                                        key: food.name,
-                                        onClick: () => handleSelectFoodFromSearch(food), // Use the new handler
-                                        // MODIFIED: Removed dark mode colors
-                                        className: `p-2 hover:bg-green-100 rounded cursor-pointer ${selectedFoodForModal && selectedFoodForModal.name === food.name ? 'bg-green-200 ring-2 ring-green-500' : ''} transition-colors` // Added transition
-                                    },
-                                        React.createElement('div', { className: 'flex items-center' }, // Flex container for image and text
-                                            // Food Image in search results
-                                            food.imageUrl && React.createElement('img', {
-                                                src: food.imageUrl,
-                                                alt: food.name,
-                                                className: 'w-8 h-8 rounded-md object-cover mr-3 flex-shrink-0', // flex-shrink-0 to prevent image shrinking
-                                                onError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = 'https://placehold.co/40x40/cccccc/333333?text=🍽️'; } // Fallback image on error
-                                            }),
-                                            React.createElement('div', { className: 'flex-grow' }, // Text container to take available space
-                                                // MODIFIED: Removed dark mode text color
-                                                React.createElement('strong', { className: 'text-sm md:text-base text-gray-800 transition-colors' }, food.name), // Responsive text size, Added transition
-                                                // MODIFIED: Removed dark mode text color
-                                                React.createElement('span', { className: 'text-xs block text-gray-600 transition-colors' }, ` (per ${food.unit}) - ${food.calories} kcal, P:${food.protein}g, C:${food.carbs}g, F:${food.fat}g, Fibre:${food.fibre || 0}g`) // Display fibre in search results, Responsive text size, Added transition
-                                            )
-                                        )
-                                    ))
-                                )
-                            )
-                        ),
-
-                        // Display selected food details (from database - show only when adding and a food is selected)
-                        // MODIFIED: Removed dark mode colors
-                        !editingMealId && selectedFoodForModal && React.createElement('div', { className: 'mb-4 p-3 bg-green-50 rounded-lg border border-green-200 flex items-center flex-shrink-0 transition-colors' }, // Added flex-shrink-0, Added transition
-                            // Food Image for selected item
-                            selectedFoodForModal.imageUrl && React.createElement('img', {
-                                src: selectedFoodForModal.imageUrl,
-                                alt: selectedFoodForModal.name,
-                                className: 'w-10 h-10 rounded-md object-cover mr-3 flex-shrink-0', // flex-shrink-0
-                                onError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => { (e.target as HTMLImageElement).src = 'https://placehold.co/40x40/cccccc/333333?text=🍽️'; } // Fallback image on error
-                            }),
-                            React.createElement('div', { className: 'flex-grow' }, // Text container
-                                // MODIFIED: Removed dark mode text color
-                                React.createElement('h4', { className: 'font-semibold text-green-700 mb-1 text-sm md:text-base transition-colors' }, 'Selected: ' + selectedFoodForModal.name), // Responsive text size, Added transition
-                                // MODIFIED: Removed dark mode text color
-                                React.createElement('p', { className: 'text-xs text-gray-600 transition-colors' }, `Per ${selectedFoodForModal.unit}: ${selectedFoodForModal.calories} kcal, P:${selectedFoodForModal.protein}g, C:${selectedFoodForModal.carbs}g, F:${selectedFoodForModal.fat}g, Fibre:${selectedFoodForModal.fibre || 0}g`) // Display fibre, Responsive text size, Added transition
-                            )
-                        ),
-
-                        // Custom Food Input Fields (Show if no database item is selected AND (there's a search term with no results OR we are editing OR we are copying a non-database item))
-                        showCustomFoodInputs && (
-                            React.createElement(Fragment, null,
-                                // MODIFIED: Removed dark mode text color
-                                !editingMealId && React.createElement('p', { className: 'text-gray-600 text-sm mb-3 flex-shrink-0 transition-colors' }, 'Enter custom food details:'), // Message only when adding custom, flex-shrink-0, Responsive text size, Added transition
-                                React.createElement('div', { className: 'mb-4 flex-shrink-0' }, // flex-shrink-0
-                                    // MODIFIED: Removed dark mode text color
-                                    React.createElement('label', { htmlFor: 'customFoodName', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Food Name'), // Simplified label, Added transition
-                                    // MODIFIED: Removed dark mode colors
-                                    React.createElement('input', {
-                                        type: 'text', id: 'customFoodName', placeholder: 'e.g., Homemade Lasagna',
-                                        value: customFoodName, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setCustomFoodName(e.target.value),
-                                        className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                                    })
-                                ),
-                                React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 flex-shrink-0' }, // Responsive grid columns
-                                    React.createElement('div', {},
-                                        // MODIFIED: Removed dark mode text color
-                                        React.createElement('label', { htmlFor: 'customUnit', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Unit'), // Added transition
-                                        // MODIFIED: Removed dark mode colors
-                                        React.createElement('input', {
-                                            type: 'text', id: 'customUnit', placeholder: 'e.g., g, piece, cup', // Updated placeholder
-                                            value: customUnit, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setCustomUnit(e.target.value),
-                                            className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                                        })
-                                    ),
-                                    React.createElement('div', {},
-                                        // MODIFIED: Removed dark mode text color
-                                        React.createElement('label', { htmlFor: 'customCalories', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Calories (per unit)'), // Added transition
-                                        // MODIFIED: Removed dark mode colors
-                                        React.createElement('input', {
-                                            type: 'number', id: 'customCalories', placeholder: 'e.g., 250',
-                                            value: customCalories, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setCustomCalories(e.target.value),
-                                            min: '0', step: '0.1', // Allow decimals for calories per unit
-                                            className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                                        })
-                                    )
-                                ) as React.ReactElement, // Cast to React.ReactElement
-                                React.createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 flex-shrink-0' }, // Responsive grid columns
-                                    React.createElement('div', {},
-                                        // MODIFIED: Removed dark mode text color
-                                        React.createElement('label', { htmlFor: 'customProtein', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Protein (g per unit)'), // Clarified label, Added transition
-                                        // MODIFIED: Removed dark mode colors
-                                        React.createElement('input', {
-                                            type: 'number', id: 'customProtein', placeholder: 'e.g., 20',
-                                            value: customProtein, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setCustomProtein(e.target.value),
-                                            min: '0', step: '0.1',
-                                            className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                                        })
-                                    ),
-                                    React.createElement('div', {},
-                                        // MODIFIED: Removed dark mode text color
-                                        React.createElement('label', { htmlFor: 'customCarbs', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Carbs (g per unit)'), // Clarified label, Added transition
-                                        // MODIFIED: Removed dark mode colors
-                                        React.createElement('input', {
-                                            type: 'number', id: 'customCarbs', placeholder: 'e.g., 30',
-                                            value: customCarbs, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setCustomCarbs(e.target.value),
-                                            min: '0', step: '0.1',
-                                            className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                                        })
-                                    ),
-                                    React.createElement('div', {},
-                                        // MODIFIED: Removed dark mode text color
-                                        React.createElement('label', { htmlFor: 'customFat', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Fat (g per unit)'), // Clarified label, Added transition
-                                        // MODIFIED: Removed dark mode colors
-                                        React.createElement('input', {
-                                            type: 'number', id: 'customFat', placeholder: 'e.g., 15',
-                                            value: customFat, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setCustomFat(e.target.value),
-                                            min: '0', step: '0.1',
-                                            className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                                        })
-                                    ),
-                                    React.createElement('div', {}, // Fibre input field
-                                        // MODIFIED: Removed dark mode text color
-                                        React.createElement('label', { htmlFor: 'customFibre', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, 'Fibre (g per unit)'), // Label for Fibre, Added transition
-                                        // MODIFIED: Removed dark mode colors
-                                        React.createElement('input', {
-                                            type: 'number', id: 'customFibre', placeholder: 'e.g., 5',
-                                            value: customFibre, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setCustomFibre(e.target.value),
-                                            min: '0', step: '0.1',
-                                            className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base' // Responsive text size, Added transition
-                                        })
-                                    )
-                                )
-                            )
-                        ),
-
-                        // Quantity input and calculated nutrients (always shown)
-                        React.createElement('div', { className: 'mb-4' },
-                            React.createElement('label', { htmlFor: 'quantity', className: 'block text-sm font-medium text-gray-700 mb-1 transition-colors' }, getQuantityLabel()),
-                            React.createElement('input', {
-                                type: 'number',
-                                id: 'quantity',
-                                value: quantity,
-                                onChange: (e: React.ChangeEvent<HTMLInputElement>) => setQuantity(e.target.value),
-                                min: '0.1',
-                                step: '0.1',
-                                className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-sm md:text-base'
-                            }),
-                            React.createElement('div', { className: 'mt-2 text-xs text-gray-600 transition-colors' },
-                                `Calories: ${calculatedNutrients.calories} kcal | Protein: ${calculatedNutrients.protein}g | Carbs: ${calculatedNutrients.carbs}g | Fat: ${calculatedNutrients.fat}g | Fibre: ${calculatedNutrients.fibre}g`
-                            )
-                        )
-                    ),
-
-                    // Modal Footer: Save/Cancel buttons
-                    React.createElement('div', { className: 'flex gap-2 mt-4 flex-shrink-0' },
-                        React.createElement('button', {
-                            onClick: handleSaveFoodEntry,
-                            className: 'flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50'
-                        }, editingMealId ? 'Save Changes' : 'Add Food'),
-                        React.createElement('button', {
-                            onClick: closeModal,
-                            className: 'flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400'
-                        }, 'Cancel')
-                    )
-                )
-            ),
+            React.createElement(FoodModal, {
+                show: showModal,
+                getModalTitle: getModalTitle,
+                modalMessage: modalMessage,
+                selectedMealType: selectedMealType,
+                setSelectedMealType: setSelectedMealType,
+                MEAL_TYPES: MEAL_TYPES,
+                editingMealId: editingMealId,
+                searchTerm: searchTerm,
+                setSearchTerm: setSearchTerm,
+                searchInputRef: searchInputRef,
+                isLoadingSearch: isLoadingSearch,
+                searchResults: searchResults,
+                handleSelectFoodFromSearch: handleSelectFoodFromSearch,
+                selectedFoodForModal: selectedFoodForModal,
+                showCustomFoodInputs: showCustomFoodInputs,
+                customFoodName: customFoodName,
+                setCustomFoodName: setCustomFoodName,
+                customUnit: customUnit,
+                setCustomUnit: setCustomUnit,
+                customCalories: customCalories,
+                setCustomCalories: setCustomCalories,
+                customProtein: customProtein,
+                setCustomProtein: setCustomProtein,
+                customCarbs: customCarbs,
+                setCustomCarbs: setCustomCarbs,
+                customFat: customFat,
+                setCustomFat: setCustomFat,
+                customFibre: customFibre,
+                setCustomFibre: setCustomFibre,
+                quantity: quantity,
+                setQuantity: setQuantity,
+                getQuantityLabel: getQuantityLabel,
+                calculatedNutrients: calculatedNutrients,
+                handleSaveFoodEntry: handleSaveFoodEntry,
+                closeModal: closeModal,
+                MEAL_SUGGESTIONS: MEAL_SUGGESTIONS
+            }),
 
             // Copy Day Template Modal
-            showCopyDayModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50' },
-                React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm flex flex-col items-center' },
-                    React.createElement('h3', { className: 'text-lg font-bold text-yellow-700 mb-2 flex items-center gap-2' },
-                        React.createElement('svg', { className: 'w-6 h-6', fill: 'none', stroke: 'currentColor', strokeWidth: 2, viewBox: '0 0 24 24' },
-                            React.createElement('path', { d: 'M8 17l4 4 4-4m-4-5v9', strokeLinecap: 'round', strokeLinejoin: 'round' }),
-                            React.createElement('rect', { x: 3, y: 3, width: 18, height: 13, rx: 2, strokeLinecap: 'round', strokeLinejoin: 'round' })
-                        ),
-                        'Copy Day Template'
-                    ),
-                    React.createElement('div', { className: 'w-full mb-4' },
-                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Select day to copy from:'),
-                        React.createElement(
-                            'select',
-                            {
-                                value: copySourceDate || '',
-                                onChange: e => setCopySourceDate((e.target as HTMLSelectElement).value),
-                                className: 'w-full p-2 border border-gray-300 rounded mb-2'
-                            } as React.SelectHTMLAttributes<HTMLSelectElement>,
-                            React.createElement('option', { value: '', disabled: true }, 'Select a day'),
-                            last7Days
-                                .filter(date => (loggedMeals[date] && loggedMeals[date].length > 0))
-                                .map(date =>
-                                    React.createElement('option', { key: date, value: date },
-                                        new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-                                    )
-                                )
-                        ),
-                        React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Copy to:'),
-                        React.createElement(
-                            'select',
-                            {
-                                value: copyTargetDate,
-                                onChange: e => setCopyTargetDate((e.target as HTMLSelectElement).value),
-                                className: 'w-full p-2 border border-gray-300 rounded'
-                            } as React.SelectHTMLAttributes<HTMLSelectElement>,
-                            next7Days.map(date =>
-                                React.createElement('option', { key: date, value: date },
-                                    new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-                                    date === getToday() ? ' (Today)' : ''
-                                )
-                            )
-                        )
-                    ),
-                    copyDayError && React.createElement('div', { className: 'text-red-600 text-xs mb-2' }, copyDayError),
-                    React.createElement('div', { className: 'flex gap-2 mt-2' },
-                        React.createElement('button', {
-                            onClick: handleCopyDayTemplate,
-                            className: 'flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-yellow-400'
-                        }, 'Copy'),
-                        React.createElement('button', {
-                            onClick: () => setShowCopyDayModal(false),
-                            className: 'flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400'
-                        }, 'Cancel')
-                    )
-                )
-            )
+            React.createElement(CopyDayTemplateModal, {
+                show: showCopyDayModal,
+                last7Days: last7Days,
+                next7Days: next7Days,
+                loggedMeals: loggedMeals,
+                copySourceDate: copySourceDate,
+                setCopySourceDate: setCopySourceDate,
+                copyTargetDate: copyTargetDate,
+                setCopyTargetDate: setCopyTargetDate,
+                getToday: getToday,
+                copyDayError: copyDayError,
+                handleCopyDayTemplate: handleCopyDayTemplate,
+                onClose: () => setShowCopyDayModal(false)
+            })
         )
     );
 }
