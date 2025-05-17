@@ -294,21 +294,31 @@ function App(): JSX.Element {
         setEditingMealId(null); // Reset editingMealId after save
     };
 
-    const handleDeleteFood = (mealId: string) => { // mealId is a string
-        // Update state using functional update
+    const handleDeleteFood = (mealId: string) => {
+        const currentMealsForDate = loggedMeals[currentDate] || [];
+        const updatedMealsForDate = currentMealsForDate.filter(meal => meal.id !== mealId);
+
+        // Persist the changes to Firebase
+        if (user) {
+            saveMeals(user, currentDate, updatedMealsForDate);
+            // saveMeals will save an empty array to Firebase if updatedMealsForDate is empty,
+            // effectively clearing the meals for that day in the database.
+        }
+
+        // Update local state
         setLoggedMeals(prevMeals => {
-            const updatedMealsForDate = (prevMeals[currentDate] || []).filter(meal => meal.id !== mealId);
-            // If the last item for a date is deleted, remove the date key from the object
+            // If all items for the date are deleted, and the date entry exists in local state,
+            // remove the date key from the local state object.
             if (updatedMealsForDate.length === 0 && prevMeals[currentDate]) {
-                // Use object destructuring to remove the key without an unused variable
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { [currentDate]: _removed, ...restOfMeals } = prevMeals;
                 return restOfMeals;
             }
-            // Otherwise, update the array for the current date
+            // Otherwise, update the array for the current date in local state.
             return { ...prevMeals, [currentDate]: updatedMealsForDate };
         });
     };
+
 
     // Handler: Actually copy the template
     const handleCopyDayTemplate = () => {
