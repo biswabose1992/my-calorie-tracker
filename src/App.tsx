@@ -793,7 +793,7 @@ function App(): JSX.Element {
                         ),
                         // Make the date display clickable to open calendar modal
                         React.createElement('button', {
-                            onClick: () => setShowCalendarModal(true), // Open calendar modal on click
+                            onClick: () => setShowCalendarModal(true),
                             className: 'text-center focus:outline-none' // Make it look like text but clickable
                         },
                             // MODIFIED: Removed dark mode text and hover colors
@@ -802,12 +802,15 @@ function App(): JSX.Element {
                                 React.createElement(CalendarDays, { className: 'mr-1 md:mr-2 w-5 h-5 md:w-6 md:h-6 text-green-600' }), // Responsive icon size
                                 currentDate === getToday() ? 'Today' : new Date(currentDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
                             ),
-                            // Show "Go to Today" button only if not on today's date
-                            !isToday && React.createElement('span', {
-                                // MODIFIED: Removed dark mode colors
-                                className: 'text-xs md:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium mt-1 focus:outline-none px-3 py-1 rounded-md transition-colors inline-block' // Added inline-block
-                            }, 'Go to Today')
                         ),
+                        !isToday && React.createElement('button', {
+                            type: 'button',
+                            onClick: () => {
+                                setCurrentDate(getToday());
+                                setShowCalendarModal(false);
+                            },
+                            className: 'text-xs md:text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium mt-1 focus:outline-none px-3 py-1 rounded-md transition-colors inline-block'
+                        }, 'Go to Today'),
                         React.createElement('button', {
                             onClick: () => changeDate(1),
                             disabled: new Date(currentDate) >= new Date(getToday()), // Disable if current date is today or in the future

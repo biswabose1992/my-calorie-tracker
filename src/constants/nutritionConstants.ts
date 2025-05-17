@@ -23,7 +23,7 @@ export const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
   'Milk (whole, raw)': { name: 'Milk (whole, raw)', unit: '100g', calories: 61, protein: 3.3, carbs: 4.7, fat: 3.3, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥛' }, // Using g for consistency, ~100ml
   'Egg (raw)': { name: 'Egg (raw)', unit: '100g', calories: 155, protein: 12.6, carbs: 1.1, fat: 10.6, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🥚' }, // Approx 2 large eggs
   'Olive Oil (raw)': { name: 'Olive Oil (raw)', unit: '100g', calories: 884, protein: 0, carbs: 0, fat: 100, fibre: 0, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🍾' }, // 100g oil = ~109ml
-  'veggies': { name: 'Veggies (mixed)', unit: '100g', calories: 40, protein: 0, carbs: 10, fat: 0, fibre: 2.8, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🥗' }, // Mixed veggies
+  'Veggies (mixed)': { name: 'Veggies (mixed)', unit: '100g', calories: 40, protein: 0, carbs: 10, fat: 0, fibre: 2.8, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🥗' }, // Mixed veggies
 
   // --- Added and Updated Food Items (Based on Images) ---
   // Myprotein Impact Whey Protein (Updated from image: 1 scoop | 130 kcal, P: 25g, C: 3g, F: 2g)
@@ -45,6 +45,11 @@ export const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
   'Omega 3': { name: 'Omega 3', unit: 'softgel', calories: 9, protein: 0, carbs: 0, fat: 1, fibre: 0, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=💊' }, // From image
   'Multivitamin': { name: 'Multivitamin', unit: 'piece', calories: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=💊' }, // From image
   'Ghee/Butter/Coconut Oil Blend': { name: 'Ghee/Butter/Coconut Oil Blend', unit: '5ml', calories: 45, protein: 0, carbs: 0, fat: 5, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🧈' }, // From image
+  'Rohu fish, Raw': { name: 'Rohu fish, Raw', unit: '100g', calories: 97, protein: 17, carbs: 4, fat: 1, fibre: 0, imageUrl: 'https://placehold.co/40x40/abcdef/333333?text=🐟' }, // Added from image, estimated fibre 0
+  'Bombay mix namkeen by haldiram\'s': { name: 'Bombay mix namkeen by haldiram\'s', unit: '100g', calories: 514.3, protein: 20, carbs: 48.6, fat: 25.7, fibre: 5, imageUrl: 'https://placehold.co/40x40/abcdef/333333?text=🥨' }, // Added from image, estimated fibre 5
+  'Mutton meat raw': { name: 'Mutton meat raw', unit: '100g', calories: 267, protein: 17, carbs: 0, fat: 22, fibre: 0, imageUrl: 'https://placehold.co/40x40/abcdef/333333?text=🥩' }, // Added from image, estimated fibre 0
+  'Dominos tandoori hot Small Pizza': { name: 'Dominos tandoori hot Small Pizza', unit: 'packet', calories: 872, protein: 47.7, carbs: 113.9, fat: 25, fibre: 8, imageUrl: 'https://placehold.co/40x40/abcdef/333333?text=🍕' }, // Added from image, unit is packet, estimated fibre 8
+  'Lightly salted dry roasted peanuts': { name: 'Lightly salted dry roasted peanuts', unit: '100g', calories: 643, protein: 25, carbs: 21.3, fat: 53.7, fibre: 8, imageUrl: 'https://placehold.co/40x40/abcdef/333333?text=🥜' }, // Added from image, calculated per 100g, estimated fibre 8
 };
 
 // --- Meal Specific Suggestions Mapping ---
