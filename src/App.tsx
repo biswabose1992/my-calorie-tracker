@@ -85,6 +85,7 @@ function App(): JSX.Element {
     const [showWeeklyModal, setShowWeeklyModal] = useState(false);
 
     // Weight Tracking Modal State
+    const [weightDate, setWeightDate] = useState(getToday());
     const [showWeightModal, setShowWeightModal] = useState(false);
     const [weightLogs, setWeightLogs] = useState<WeightLog[]>(() => {
         try {
@@ -115,6 +116,10 @@ function App(): JSX.Element {
     // Ref for the search input for auto-focus
     const searchInputRef = useRef<HTMLInputElement>(null);
 
+    // Ref for the scrollable weight graph container
+    const weightGraphContainerRef = useRef<HTMLDivElement>(null);
+
+
     // New state for Copy Day Template Modal
     const [showCopyDayModal, setShowCopyDayModal] = useState<boolean>(false);
     const [copySourceDate, setCopySourceDate] = useState<string | null>(null);
@@ -140,21 +145,21 @@ function App(): JSX.Element {
             setWeightError('Please enter a valid weight.');
             return;
         }
-        const today = getToday();
         setWeightLogs(prev => {
-            const filtered = prev.filter(log => log.date !== today);
-            return [...filtered, { date: today, weight }];
+            const filtered = prev.filter(log => log.date !== weightDate);
+            return [...filtered, { date: weightDate, weight }];
         });
         setWeightInput('');
         setWeightError('');
         setShowWeightModal(false);
     };
 
+    // Ensure weightData is sorted by date for correct graph plotting
     const last14Days = Array.from({ length: 14 }, (_, i) => addDays(getToday(), -13 + i));
     const weightData = last14Days.map(date => {
         const log = weightLogs.find(l => l.date === date);
         return { date, weight: log ? log.weight : null };
-    });
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()); // Sort by date ascending
 
     const weightsOnly = weightData.filter(d => d.weight !== null).map(d => d.weight as number);
     const minWeight = weightsOnly.length ? Math.min(...weightsOnly) : 0;
@@ -233,6 +238,29 @@ function App(): JSX.Element {
 
 
     }, [searchTerm, showModal, editingMealId, selectedMealType, copyingMeal]); // Dependencies updated
+
+
+    // Effect to scroll the weight graph to the current date when the modal opens
+    useEffect(() => {
+        if (showWeightModal && weightGraphContainerRef.current) {
+            // Find the index of the current weightDate in the weightData array
+            const currentIndex = weightData.findIndex(d => d.date === weightDate);
+            if (currentIndex !== -1) {
+                // Calculate the scroll position needed to center the current date
+                // Assuming each date point takes up roughly equal horizontal space
+                const totalWidth = 700; // The fixed width of the SVG
+                const pointWidth = totalWidth / weightData.length;
+                const centerPosition = (currentIndex * pointWidth) + (pointWidth / 2);
+
+                // Calculate the scrollLeft value to bring the centerPosition into the middle of the container
+                const containerWidth = weightGraphContainerRef.current.offsetWidth;
+                const scrollLeft = centerPosition - (containerWidth / 2);
+
+                // Scroll the container
+                weightGraphContainerRef.current.scrollLeft = scrollLeft;
+            }
+        }
+    }, [showWeightModal, weightDate, weightData]); // Dependencies: re-run when modal opens, weightDate changes, or weightData changes
 
 
     // Function to handle saving (both adding and editing)
@@ -715,7 +743,10 @@ function App(): JSX.Element {
                 ),
                 // Weight Log CTA - Icon only
                 React.createElement('button', {
-                    onClick: () => setShowWeightModal(true),
+                    onClick: () => {
+                        setWeightDate(currentDate); // Set the weight date to the currently viewed date
+                        setShowWeightModal(true);
+                    },
                     className: 'p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50',
                     'aria-label': 'Log Weight & View Trend'
                 },
@@ -951,9 +982,21 @@ function App(): JSX.Element {
             // Weight Modal
             showWeightModal && React.createElement('div', { className: 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50' },
                 React.createElement('div', { className: 'bg-white rounded-xl shadow-2xl p-6 w-full max-w-md flex flex-col items-center' },
-                    React.createElement('h3', { className: 'text-lg font-bold text-blue-700 mb-2 flex items-center gap-2' },
+                    React.createElement('h3', { className: 'text-lg font-bold text-blue-700 mb-4 flex items-center gap-2' }, // Increased bottom margin
                         React.createElement(WeightIcon, { className: 'w-6 h-6' }),
-                        'Log Today\'s Weight'
+                        'Log Weight & View Trend' // Changed title slightly
+                    ),
+                    // Date input for weight logging
+                    React.createElement('div', { className: 'w-full mb-4' }, // Added container for date picker
+                        React.createElement('label', { htmlFor: 'weightDate', className: 'block text-sm font-medium text-gray-700 mb-1' }, 'Select Date:'),
+                        React.createElement('input', {
+                            type: 'date',
+                            id: 'weightDate',
+                            value: weightDate,
+                            max: getToday(), // Prevent logging weight for future dates
+                            onChange: e => setWeightDate(e.target.value),
+                            className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm md:text-base'
+                        })
                     ),
                     React.createElement('input', {
                         type: 'number',
@@ -965,77 +1008,97 @@ function App(): JSX.Element {
                         className: 'w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm md:text-base mb-2'
                     }),
                     weightError && React.createElement('div', { className: 'text-red-600 text-xs mb-2' }, weightError),
-                    React.createElement('div', { className: 'flex gap-2 mt-2 mb-4' },
+                    // Adjusted button padding and removed flex-1 for narrower buttons
+                    React.createElement('div', { className: 'flex gap-2 mt-2 mb-6 justify-center' }, // Increased bottom margin, centered buttons
                         React.createElement('button', {
                             onClick: handleLogWeight,
-                            className: 'flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
-                        }, 'Save'),
+                            className: 'bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 text-sm' // Reduced padding, smaller text
+                        }, 'Save Weight'), // Changed button text
                         React.createElement('button', {
                             onClick: () => { setShowWeightModal(false); setWeightInput(''); setWeightError(''); },
-                            className: 'flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                            className: 'bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 text-sm' // Reduced padding, smaller text
                         }, 'Close')
                     ),
-                    // Weight Graph inside the modal
-                    React.createElement('div', { className: 'w-full' },
-                        React.createElement('h4', { className: 'text-base font-semibold text-blue-700 mb-2 text-center' }, 'Weight Trend (Last 14 Days)'),
-                        React.createElement('div', { className: 'w-full h-40 md:h-48 flex items-end' },
+                    // Weight Graph inside the modal - Enhanced Design and Scrollable
+                    // Added overflow-x-auto to the container div and assigned ref
+                    React.createElement('div', { className: 'w-full bg-purple-100 p-4 rounded-lg shadow-inner overflow-x-auto', ref: weightGraphContainerRef }, // Added light purple background, padding, rounded corners, inner shadow, and horizontal overflow, Added ref
+                        React.createElement('h4', { className: 'text-base font-semibold text-purple-800 mb-4 text-center' }, 'Weight Trend (Last 14 Days)'), // Purple text
+                        // Set a fixed width on the SVG to enable scrolling
+                        React.createElement('div', { className: 'w-full h-48 md:h-56 flex items-end relative' }, // Increased height, added relative for absolute positioning
+                            // SVG Container
+                            // Increased height of SVG to make space for date labels below the graph line
                             React.createElement('svg', {
-                                width: '100%',
-                                height: '100%',
-                                viewBox: '0 0 350 120',
-                                className: 'w-full h-full'
+                                width: '700', // Set a fixed width wider than the container
+                                height: '150', // Increased height to accommodate date labels
+                                viewBox: '0 0 700 150', // Adjusted viewBox to match the new height
+                                preserveAspectRatio: "none", // Allow stretching
+                                className: 'h-full absolute inset-0' // Position absolutely to fill container height, width is fixed
                             },
-                                weightData.map((d, i) =>
-                                    React.createElement('text', {
-                                        key: d.date,
-                                        x: 25 + (i * 25),
-                                        y: 115,
-                                        fontSize: 8,
-                                        fill: '#64748b',
-                                        textAnchor: 'middle'
-                                    }, new Date(d.date + 'T00:00:00').getDate())
-                                ),
+                                // Y-axis Grid Lines and Labels - Adjusted x position for labels
                                 React.createElement(
                                     React.Fragment,
                                     null,
-                                    [minWeight, maxWeight].map((w, i) =>
-                                        React.createElement(React.Fragment, { key: i },
+                                    // Generate 3-4 horizontal grid lines and labels
+                                    Array.from({ length: 4 }).map((_, i, arr) => {
+                                        const weightValue = minWeight + (i / (arr.length - 1)) * (maxWeight - minWeight);
+                                        // Adjusted yPosition calculation based on new SVG height (150 instead of 120)
+                                        const yPosition = 10 + (100 * (1 - (weightValue - minWeight) / ((maxWeight - minWeight) || 1)));
+                                        return React.createElement(React.Fragment, { key: `y-axis-${i}` },
                                             React.createElement('line', {
-                                                x1: 20, x2: 340, y1: 10 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))), y2: 10 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))),
-                                                stroke: '#e5e7eb', strokeWidth: 1
+                                                x1: 30, x2: 670, y1: yPosition, y2: yPosition, // Adjusted x2 to match new SVG width
+                                                stroke: '#dadae0', // Lighter grid line color
+                                                strokeWidth: 0.5
                                             }),
                                             React.createElement('text', {
-                                                x: 10, y: 14 + (100 * (1 - (w - minWeight) / ((maxWeight - minWeight) || 1))),
-                                                fontSize: 8, fill: '#64748b', textAnchor: 'end'
-                                            }, w)
-                                        )
-                                    )
+                                                x: 25, // Adjusted x position slightly left of the line start
+                                                y: yPosition + 3, // Vertically align text
+                                                fontSize: 8,
+                                                fill: '#64748b', // Text color
+                                                textAnchor: 'end'
+                                            }, weightValue.toFixed(1)) // Display weight value
+                                        );
+                                    })
                                 ),
+                                // X-axis Labels (Days) - Adjusted vertical position, font size, and x position
+                                weightData.map((d, i) => {
+                                    const xPosition = 30 + (i * (640 / (weightData.length - 1 || 1))); // Calculate x position based on new width and number of points
+                                    return React.createElement('text', {
+                                        key: d.date,
+                                        x: xPosition, // Position based on calculated xPosition
+                                        y: 145, // Increased vertical position to make space below the graph line
+                                        fontSize: 10, // Increased font size
+                                        fill: '#4b5563', // Darker text color for better visibility
+                                        textAnchor: 'middle' // Center text below the point
+                                    }, new Date(d.date + 'T00:00:00').getDate()); // Display just the day number
+                                }),
+                                // Weight Line - Adjusted x position
                                 React.createElement('polyline', {
                                     fill: 'none',
-                                    stroke: '#2563eb',
-                                    strokeWidth: 2,
+                                    stroke: '#6d28d9', // Purple line color
+                                    strokeWidth: 2.5, // Thicker line
                                     points: weightData.map((d, i) => {
                                         if (d.weight === null) return '';
-                                        const x = 25 + (i * 25);
+                                        const x = 30 + (i * (640 / (weightData.length - 1 || 1))); // Calculate x position based on new width
+                                        // Adjusted y calculation based on new SVG height (150 instead of 120)
                                         const y = 10 + (100 * (1 - ((d.weight - minWeight) / ((maxWeight - minWeight) || 1))));
                                         return `${x},${y}`;
                                     }).filter(Boolean).join(' ')
                                 }),
+                                // Data Points (Circles) - Adjusted cx position
                                 weightData.map((d, i) =>
                                     d.weight !== null && React.createElement('circle', {
                                         key: d.date,
-                                        cx: 25 + (i * 25),
+                                        cx: 30 + (i * (640 / (weightData.length - 1 || 1))), // Calculate cx position based on new width
                                         cy: 10 + (100 * (1 - ((d.weight - minWeight) / ((maxWeight - minWeight) || 1)))),
-                                        r: 3,
-                                        fill: '#2563eb',
-                                        stroke: '#fff',
-                                        strokeWidth: 1
+                                        r: 4, // Larger circle radius
+                                        fill: '#8b5cf6', // Lighter purple fill
+                                        stroke: '#ffffff', // White stroke
+                                        strokeWidth: 1.5 // Thicker stroke
                                     })
                                 )
                             )
                         ),
-                        React.createElement('div', { className: 'text-xs text-gray-500 mt-2 text-center' },
+                        React.createElement('div', { className: 'text-xs text-gray-500 mt-4 text-center' }, // Increased top margin
                             'Tip: Log your weight daily to see your trend. Only the last 14 days are shown.'
                         )
                     )
