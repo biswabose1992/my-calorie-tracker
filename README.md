@@ -1,85 +1,98 @@
-### Daily Calorie & Nutrient Tracker App
+# Daily Calorie & Nutrient Tracker
 
-This is a simple web application built with React, TypeScript, and Vite for tracking daily calorie and nutrient intake. It allows users to log food items for different meals, view daily totals, navigate through past days (up to 7 days history), and add custom food items.
+A simple web app to track your daily calories, macros, and weight trends. Built with React, TypeScript, Vite, and Tailwind CSS.
+
+---
 
 ## Features
-- Daily Tracking: Log food items for Breakfast, Lunch, Snacks, and Dinner.
 
-- Nutrient Breakdown: Tracks Calories, Protein, Carbohydrates, Fat, and Fibre for each logged item and provides daily totals.
+- **Daily Food Logging:**  
+  Log foods for Breakfast, Lunch, Snacks, and Dinner.
 
-- Date Navigation: Easily navigate between days to view past logs (up to the last 7 days).
+- **Nutrient Breakdown:**  
+  See daily totals for Calories, Protein, Carbs, Fat, and Fibre.
 
-- Food Database & Search: Search for food items from a pre-defined database.
+- **Food Database & Search:**  
+  Search a built-in food database or add your own custom foods.
 
-- Custom Food Items: Add your own food items with custom nutrient information.
+- **Custom Food Items:**  
+  Enter custom foods with your own nutrition info.
 
-- Edit & Delete Entries: Modify or remove logged food entries.
+- **Edit, Delete, and Copy Entries:**  
+  Modify, remove, or duplicate any food entry.
 
-- Copy Entries: Quickly copy existing logged food items to add them again.
+- **Date Navigation:**  
+  View and log foods for today or any of the last 7 days.
 
-- Local Storage: Saves your logged data directly in your browser's local storage.
+- **Copy Day Template:**  
+  Copy all meals from one day to another.
 
-## Technologies Used
-- React: A JavaScript library for building user interfaces.
+- **Weekly Calorie Average:**  
+  View your average calories for the past week.
 
-- TypeScript: Adds static typing to JavaScript for improved code quality and maintainability.
+- **Weight Logging & Trend:**  
+  Log your weight for any day and see a 14-day weight trend graph.
 
-- Vite: A fast frontend build tool that provides a great development experience.
+- **Local Storage:**  
+  All data is saved in your browser—no account needed.
 
-- Tailwind CSS: A utility-first CSS framework for rapid styling.
+---
 
-## Setup and Local Development
-To get the project running on your local machine:
+## Getting Started
 
-1. Clone the repository: 
-   
- ` git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-  cd YOUR_REPO_NAME`
+1. **Clone the repository:**
+   ```sh
+   git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+   cd YOUR_REPO_NAME
+   ```
 
-(Replace YOUR_USERNAME and YOUR_REPO_NAME with your GitHub username and repository name)
+2. **Install dependencies:**
+   ```sh
+   npm install
+   # or
+   yarn install
+   ```
 
-2. Install dependencies:
-`npm install # or yarn install`
+3. **Run the development server:**
+   ```sh
+   npm run dev
+   # or
+   yarn dev
+   ```
+   The app will be available at [http://localhost:5173](http://localhost:5173).
 
-3. Run the development server:
-
-`npm run dev # or yarn dev`
-
-The app will be available at `http://localhost:5173` (or another port if 5173 is in use).
-
-## Building for Production and Deployment
-To create a production build of the app and deploy it (e.g., to GitHub Pages):
-
-1. Build the application:
-
-  `npm run build`
-
-  This will create a dist folder containing the optimized production files.
-
-2. Deploy using the gh-pages script:
-(Assuming you have followed the steps to install gh-pages and added the deploy script to your package.json)
-
-`npm run deploy`
-
-This command builds the app and pushes the dist folder to the gh-pages branch of your GitHub repository.
-
-3. Configure GitHub Pages:
-Go to your GitHub repository's Settings -> Pages and set the source to the gh-pages branch and the / (root) folder. Your app will be live at `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/`
+---
 
 ## Usage
-- Use the date navigation arrows to select the day you want to view or log food for.
 
-- Click the "+" button next to each meal type (Breakfast, Lunch, Snacks, Dinner) to log a new food item for that meal (only available for today's date).
+- Use the date arrows at the top to switch between days (up to 7 days history).
+- Click the "+" button next to a meal to log food for that meal.
+- Search for foods or add custom foods in the modal.
+- Edit, copy, or delete entries using the icons next to each food.
+- Click the bar chart icon to see your weekly calorie average.
+- Click the weight icon to log your weight and view your weight trend.
+- Use the "Copy Day Template" button to copy all meals from one day to another.
 
-- In the modal, search for a food item from the database or enter details for a custom food.
+---
 
-- Enter the quantity and save the entry.
+## Build & Deploy
 
-- Click the edit or copy icons next to a logged food item to modify or duplicate it (only available for today's date).
+To create a production build:
+```sh
+npm run build
+# or
+yarn build
+```
+The optimized files will be in the `dist` folder.
 
-- Click the trash icon to delete a logged food item (only available for today's date).
+To deploy (e.g., to GitHub Pages), follow your preferred static hosting instructions.
 
-- Daily totals for calories, protein, carbs, fat, and fibre are displayed at the top.
+---
 
-Disclaimer
-The nutrient data provided in the built-in database is for demonstration purposes only and may not be completely accurate. Always consult official nutrition sources or a registered dietitian for precise dietary information.
+## Disclaimer
+
+Nutrient data in the built-in database is for demonstration only and may not be accurate. For precise dietary information, consult official sources or a registered dietitian.
+
+---
+
+Enjoy tracking your nutrition and progress!
