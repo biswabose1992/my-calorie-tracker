@@ -488,12 +488,17 @@ function App(): JSX.Element {
         // Populate custom food states for editing (calculate per-unit values from logged totals)
         setCustomFoodName(meal.foodName);
         setCustomUnit(meal.unit); // Use the unit from the logged entry
-        // Calculate per-unit values for display in custom fields
-        setCustomCalories(meal.quantity > 0 ? (meal.calories / meal.quantity).toFixed(1) : '0');
-        setCustomProtein(meal.quantity > 0 ? (meal.protein / meal.quantity).toFixed(1) : '0');
-        setCustomCarbs(meal.quantity > 0 ? (meal.carbs / meal.quantity).toFixed(1) : '0');
-        setCustomFat(meal.quantity > 0 ? (meal.fat / meal.quantity).toFixed(1) : '0');
-        setCustomFibre(meal.quantity > 0 ? (meal.fibre / meal.quantity).toFixed(1) : '0'); // Populate custom fibre
+
+        // --- FIX: Calculate per-unit values with full precision ---
+        // Only calculate if quantity is greater than 0 to avoid division by zero
+        const quantityLogged = meal.quantity > 0 ? meal.quantity : 1; // Use 1 to avoid division by zero if quantity is 0
+
+        setCustomCalories(meal.calories / quantityLogged); // Store full precision
+        setCustomProtein(meal.protein / quantityLogged); // Store full precision
+        setCustomCarbs(meal.carbs / quantityLogged);   // Store full precision
+        setCustomFat(meal.fat / quantityLogged);     // Store full precision
+        setCustomFibre((meal.fibre || 0) / quantityLogged); // Store full precision, handle optional fibre
+
 
         // In edit mode, we are always treating the input as custom, so no need to pre-select from database
         setSelectedFoodForModal(null);
@@ -518,11 +523,15 @@ function App(): JSX.Element {
         setCustomFoodName(meal.foodName);
         setCustomUnit(meal.unit);
         // Calculate per-unit values for display in custom fields (same logic as edit)
-        setCustomCalories(meal.quantity > 0 ? (meal.calories / meal.quantity).toFixed(1) : '0');
-        setCustomProtein(meal.quantity > 0 ? (meal.protein / meal.quantity).toFixed(1) : '0');
-        setCustomCarbs(meal.quantity > 0 ? (meal.carbs / meal.quantity).toFixed(1) : '0');
-        setCustomFat(meal.quantity > 0 ? (meal.fat / meal.quantity).toFixed(1) : '0');
-        setCustomFibre(meal.quantity > 0 ? (meal.fibre / meal.quantity).toFixed(1) : '0');
+        // --- FIX: Calculate per-unit values with full precision when copying ---
+        const quantityLogged = meal.quantity > 0 ? meal.quantity : 1; // Use 1 to avoid division by zero if quantity is 0
+
+        setCustomCalories(meal.calories / quantityLogged); // Store full precision
+        setCustomProtein(meal.protein / quantityLogged); // Store full precision
+        setCustomCarbs(meal.carbs / quantityLogged);   // Store full precision
+        setCustomFat(meal.fat / quantityLogged);     // Store full precision
+        setCustomFibre((meal.fibre || 0) / quantityLogged); // Store full precision, handle optional fibre
+
 
         // If the copied item is in the database, pre-select it in the modal
         const dbFood = DETAILED_FOOD_DATABASE[meal.foodName];

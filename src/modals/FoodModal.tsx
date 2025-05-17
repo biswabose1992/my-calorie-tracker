@@ -284,7 +284,9 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         type="number"
                                         id="customProtein"
                                         placeholder="e.g., 20"
-                                        value={customProtein}
+                                        // --- FIX: Format the value for display ---
+                                        value={parseFloat(customProtein as string).toFixed(1)}
+                                        // --- End Fix ---
                                         onChange={e => setCustomProtein(e.target.value)}
                                         min="0"
                                         step="0.1"
@@ -297,7 +299,9 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         type="number"
                                         id="customCarbs"
                                         placeholder="e.g., 30"
-                                        value={customCarbs}
+                                        // --- FIX: Format the value for display ---
+                                        value={parseFloat(customCarbs as string).toFixed(1)}
+                                        // --- End Fix ---
                                         onChange={e => setCustomCarbs(e.target.value)}
                                         min="0"
                                         step="0.1"
@@ -310,7 +314,9 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         type="number"
                                         id="customFat"
                                         placeholder="e.g., 15"
-                                        value={customFat}
+                                        // --- FIX: Format the value for display ---
+                                        value={parseFloat(customFat as string).toFixed(1)}
+                                        // --- End Fix ---
                                         onChange={e => setCustomFat(e.target.value)}
                                         min="0"
                                         step="0.1"
@@ -323,7 +329,9 @@ const FoodModal: React.FC<FoodModalProps> = ({
                                         type="number"
                                         id="customFibre"
                                         placeholder="e.g., 5"
-                                        value={customFibre}
+                                        // --- FIX: Format the value for display ---
+                                        value={parseFloat(customFibre as string).toFixed(1)}
+                                        // --- End Fix ---
                                         onChange={e => setCustomFibre(e.target.value)}
                                         min="0"
                                         step="0.1"

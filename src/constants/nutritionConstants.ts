@@ -23,15 +23,14 @@ export const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
   'Milk (whole, raw)': { name: 'Milk (whole, raw)', unit: '100g', calories: 61, protein: 3.3, carbs: 4.7, fat: 3.3, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥛' }, // Using g for consistency, ~100ml
   'Egg (raw)': { name: 'Egg (raw)', unit: '100g', calories: 155, protein: 12.6, carbs: 1.1, fat: 10.6, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🥚' }, // Approx 2 large eggs
   'Olive Oil (raw)': { name: 'Olive Oil (raw)', unit: '100g', calories: 884, protein: 0, carbs: 0, fat: 100, fibre: 0, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🍾' }, // 100g oil = ~109ml
-  'Avocado (raw)': { name: 'Avocado (raw)', unit: '100g', calories: 160, protein: 2, carbs: 9, fat: 14.7, fibre: 6.7, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🥑' },
-  'Lentils (dry, raw)': { name: 'Lentils (dry, raw)', unit: '100g', calories: 352, protein: 24.6, carbs: 63.4, fat: 1.1, fibre: 15.6, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍲' }, // Note: Lentils are typically cooked
+  'veggies': { name: 'Veggies (mixed)', unit: '100g', calories: 40, protein: 0, carbs: 10, fat: 0, fibre: 2.8, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🥗' }, // Mixed veggies
 
   // --- Added and Updated Food Items (Based on Images) ---
   // Myprotein Impact Whey Protein (Updated from image: 1 scoop | 130 kcal, P: 25g, C: 3g, F: 2g)
   'Myprotein Impact Whey Protein (1 scoop)': { name: 'Myprotein Impact Whey Protein (1 scoop)', unit: 'scoop', calories: 130, protein: 25, carbs: 3, fat: 2, fibre: 0.3, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥛' }, // Added estimated fibre
   'Lean cookie': { name: 'Lean cookie', unit: 'piece', calories: 190, protein: 25, carbs: 14, fat: 3.6, fibre: 1.5, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🍪' }, // From image
   // Chicken Breast (raw) (Updated from image: 150 gm | 192 kcal, P:39g, C:0g, F:3g -> per 100g)
-  'Chicken Breast (raw)': { name: 'Chicken Breast (raw)', unit: '100g', calories: 128, protein: 26, carbs: 0, fat: 2, fibre: 0, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍗' },
+  'Chicken Breast (raw)': { name: 'Chicken Breast (raw)', unit: '100g', calories: 145, protein: 25, carbs: 0, fat: 5, fibre: 0, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍗' },
   // White Rice (raw) (Updated from image: "rice/poha/oats..." 50 gm | 168 kcal, P:4g, C:38g, F:0g -> per 100g)
   'White Rice (raw)': { name: 'White Rice (raw)', unit: '100g', calories: 336, protein: 8, carbs: 76, fat: 0, fibre: 1, imageUrl: 'https://placehold.co/40x40/d1d5db/4b5563?text=🍚' }, // Added estimated fibre
   // Indian Dal Fry (cooked) (Updated from image: 150 gm | 150 kcal, P: 7.5g, C: 21g, F: 4.5g -> per 100g)
