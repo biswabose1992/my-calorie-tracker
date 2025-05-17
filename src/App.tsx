@@ -1,9 +1,15 @@
 import React, { useState, useEffect, Fragment, useRef } from 'react'; // Import hooks, Fragment, and useRef from React
 import type { JSX } from 'react/jsx-dev-runtime';
 
+import { onAuthStateChanged } from "firebase/auth";
+import type { User } from "firebase/auth";
+import { auth } from "./firebase";
+import GoogleAuthButton from "./auth.tsx";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "./firebase";
 // --- Import Type Definitions and Constants ---
 // Assuming types are in a 'types.ts' file or similar
-import type { FoodItem, LoggedFoodItem, MealType, LoggedMeals, ModalMessage } from './types/types'; // Assuming types are in a 'types.ts' file
+import type { FoodItem, LoggedFoodItem, MealType, ModalMessage } from './types/types'; // Assuming types are in a 'types.ts' file
 // Import constants from constants/index.ts
 import {
     MEAL_TYPES,
@@ -54,25 +60,27 @@ type WeightLog = { date: string; weight: number };
 
 // --- Main App Component ---
 function App(): JSX.Element {
-    const [currentDate, setCurrentDate] = useState<string>(getToday());
-    const [loggedMeals, setLoggedMeals] = useState<LoggedMeals>(() => {
-        // Initialize state from localStorage on component mount
-        const storedMeals = JSON.parse(localStorage.getItem('calorieAppMeals_v2') || '{}') as LoggedMeals;
-        // Clean up old data on load (keeping last 7 days including today)
-        const cleanedMeals: LoggedMeals = {};
-        const today = new Date();
-        const sevenDaysAgo = new Date(today);
-        sevenDaysAgo.setDate(today.getDate() - 6); // Keep today and the 6 previous days
 
-        Object.keys(storedMeals).forEach(dateKey => {
-            const mealDate = new Date(dateKey + 'T00:00:00'); // Treat stored date as UTC
-            // Check if the date is within the last 7 days (inclusive of today)
-            if (mealDate >= sevenDaysAgo && mealDate <= today) {
-                cleanedMeals[dateKey] = storedMeals[dateKey];
-            }
-        });
-        return cleanedMeals;
-    });
+    const [user, setUser] = useState<User | null>(null);
+
+    useEffect(() => {
+        const unsub = onAuthStateChanged(auth, setUser);
+        return () => unsub();
+    }, []);
+
+    const [currentDate, setCurrentDate] = useState<string>(getToday());
+    const [loggedMeals, setLoggedMeals] = useState<Record<string, LoggedFoodItem[]>>({});
+
+    useEffect(() => {
+        if (user) {
+            fetchMeals(user, currentDate).then(data => {
+                setLoggedMeals(prev => ({
+                    ...prev,
+                    [currentDate]: data || []
+                }));
+            });
+        }
+    }, [user, currentDate]);
 
     const [selectedMealType, setSelectedMealType] = useState<MealType>(MEAL_TYPES[0]);
     const [quantity, setQuantity] = useState<number | string>(1); // Allow string for input field value
@@ -90,6 +98,8 @@ function App(): JSX.Element {
     // Weight Tracking Modal State
     const [weightDate, setWeightDate] = useState(getToday());
     const [showWeightModal, setShowWeightModal] = useState(false);
+    const [weightInput, setWeightInput] = useState<string>('');
+    const [weightError, setWeightError] = useState<string>('');
     const [weightLogs, setWeightLogs] = useState<WeightLog[]>(() => {
         try {
             return JSON.parse(localStorage.getItem('calorieAppWeightLogs_v1') || '[]');
@@ -97,8 +107,6 @@ function App(): JSX.Element {
             return [];
         }
     });
-    const [weightInput, setWeightInput] = useState<string>('');
-    const [weightError, setWeightError] = useState<string>('');
 
     // Modal specific states
     const [searchTerm, setSearchTerm] = useState<string>('');
@@ -168,10 +176,7 @@ function App(): JSX.Element {
     const minWeight = weightsOnly.length ? Math.min(...weightsOnly) : 0;
     const maxWeight = weightsOnly.length ? Math.max(...weightsOnly) : 100;
 
-    // Effect to save meals to localStorage whenever loggedMeals changes
-    useEffect(() => {
-        localStorage.setItem('calorieAppMeals_v2', JSON.stringify(loggedMeals));
-    }, [loggedMeals]); // Dependency array ensures this runs only when loggedMeals changes
+
 
     // Effect for handling search, suggestions, and auto-focus when the modal is open
     useEffect(() => {
@@ -267,141 +272,26 @@ function App(): JSX.Element {
 
 
     // Function to handle saving (both adding and editing)
-    const handleSaveFoodEntry = () => {
-        setModalMessage({ text: '', type: '' }); // Clear previous messages
+    const handleSaveFoodEntry = (mealType: MealType, foodData: LoggedFoodItem) => {
+        setLoggedMeals(prev => {
+            const prevMealsForDate = prev[currentDate] || [];
+            let updatedMealsForDate;
 
-        let foodEntryToSave: LoggedFoodItem | null = null;
-
-        // Determine if we are saving a database item or a custom item
-        if (selectedFoodForModal && editingMealId === null) { // Adding a new database item (including copied items)
-            const q = parseFloat(quantity as string); // Cast quantity to string for parseFloat
-            if (q <= 0 || isNaN(q)) {
-                setModalMessage({ text: "Please enter a valid positive number for quantity.", type: 'error' });
-                return;
-            }
-
-            // Calculate nutrients based on the quantity and the food's unit
-            let calculatedCals, calculatedProt, calculatedCarbs, calculatedFat, calculatedFibre;
-            let displayUnit;
-
-            if (selectedFoodForModal.unit === '100g') {
-                // If unit is 100g, quantity is in grams
-                calculatedCals = selectedFoodForModal.calories * (q / 100);
-                calculatedProt = selectedFoodForModal.protein * (q / 100);
-                calculatedCarbs = selectedFoodForModal.carbs * (q / 100);
-                calculatedFat = selectedFoodForModal.fat * (q / 100);
-                calculatedFibre = (selectedFoodForModal.fibre || 0) * (q / 100);
-                displayUnit = 'g'; // Display unit as 'g'
+            if (editingMealId) { // Checks the editingMealId state from App.tsx
+                updatedMealsForDate = prevMealsForDate.map(item =>
+                    item.id === editingMealId ? foodData : item // foodData comes from FoodModal with the correct ID
+                );
             } else {
-                // If unit is not 100g (e.g., scoop, piece, ml), quantity is in that unit
-                calculatedCals = selectedFoodForModal.calories * q;
-                calculatedProt = selectedFoodForModal.protein * q;
-                calculatedCarbs = selectedFoodForModal.carbs * q;
-                calculatedFat = selectedFoodForModal.fat * q;
-                calculatedFibre = (selectedFoodForModal.fibre || 0) * q;
-                displayUnit = selectedFoodForModal.unit; // Display unit as the original unit
+                updatedMealsForDate = [...prevMealsForDate, foodData];
             }
 
-
-            foodEntryToSave = {
-                id: Date.now().toString(), // Generate a new ID for new entries (including copied)
-                mealType: selectedMealType,
-                foodName: selectedFoodForModal.name,
-                quantity: q,
-                unit: displayUnit, // Use the determined display unit
-                calories: Math.round(calculatedCals),
-                protein: Math.round(calculatedProt * 10) / 10,
-                carbs: Math.round(calculatedCarbs * 10) / 10,
-                fat: Math.round(calculatedFat * 10) / 10,
-                fibre: Math.round(calculatedFibre * 10) / 10, // Include fibre
-                imageUrl: selectedFoodForModal.imageUrl // Include image URL
-            };
-        } else if (editingMealId) { // Editing an existing item
-            const existingEntry = loggedMeals[currentDate]?.find(meal => meal.id === editingMealId);
-            if (!existingEntry) {
-                setModalMessage({ text: "Error: Could not find item to edit.", type: 'error' });
-                return;
+            const updatedMeals = { ...prev, [currentDate]: updatedMealsForDate };
+            if (user) {
+                saveMeals(user, currentDate, updatedMealsForDate);
             }
-
-            const q = parseFloat(quantity as string); // Cast quantity to string
-            const calsPerUnit = parseFloat(customCalories as string); // Cast customCalories to string
-            const protPerUnit = parseFloat(customProtein as string); // Cast customProtein as string
-            const carbsPerUnit = parseFloat(customCarbs as string); // Cast customCarbs as string
-            const fatPerUnit = parseFloat(customFat as string); // Cast customFat as string
-            const fibrePerUnit = parseFloat(customFibre as string); // Get custom fibre, cast to string
-
-            // Validation for editing
-            if (q <= 0 || isNaN(q) || !customFoodName.trim() || !customUnit.trim() ||
-                isNaN(calsPerUnit) || calsPerUnit < 0 || isNaN(protPerUnit) || protPerUnit < 0 || isNaN(carbsPerUnit) || carbsPerUnit < 0 || isNaN(fatPerUnit) || fatPerUnit < 0 || isNaN(fibrePerUnit) || fibrePerUnit < 0) { // Validate fibre
-                setModalMessage({ text: "Please fill in all fields with valid positive numbers (calories, protein, carbs, fat, fibre can be 0).", type: 'error' }); // Updated message
-                return;
-            }
-
-            // Create the updated entry object, ensuring all LoggedFoodItem properties are present
-            foodEntryToSave = {
-                ...existingEntry, // Start with existing properties
-                mealType: selectedMealType, // Override mealType
-                foodName: customFoodName.trim(), // Override foodName
-                quantity: q, // Override quantity
-                unit: customUnit.trim(), // Override unit
-                calories: Math.round(calsPerUnit * q), // Calculate and override calories
-                protein: Math.round(protPerUnit * q * 10) / 10, // Calculate and override protein
-                carbs: Math.round(carbsPerUnit * q * 10) / 10, // Calculate and override carbs
-                fat: Math.round(fatPerUnit * q * 10) / 10, // Calculate and override fat
-                fibre: Math.round(fibrePerUnit * q * 10) / 10, // Calculate and override fibre
-                // imageUrl is kept from existingEntry if present
-            };
-        }
-        else { // Adding a new custom item
-            const calsPerUnit = parseFloat(customCalories as string); // Cast to string
-            const protPerUnit = parseFloat(customProtein as string); // Cast to string
-            const carbsPerUnit = parseFloat(customCarbs as string); // Cast to string
-            const fatPerUnit = parseFloat(customFat as string); // Cast to string
-            const fibrePerUnit = parseFloat(customFibre as string); // Get custom fibre, cast to string
-            const q = parseFloat(quantity as string); // Cast to string
-
-            // Validation for adding custom food
-            if (!customFoodName.trim() || !customUnit.trim() || q <= 0 || isNaN(q) ||
-                isNaN(calsPerUnit) || calsPerUnit < 0 || isNaN(protPerUnit) || protPerUnit < 0 || isNaN(carbsPerUnit) || carbsPerUnit < 0 || isNaN(fatPerUnit) || fatPerUnit < 0 || isNaN(fibrePerUnit) || fibrePerUnit < 0) { // Validate fibre
-                setModalMessage({ text: "Please fill in all custom food details with valid positive numbers (calories, protein, carbs, fat, fibre can be 0).", type: 'error' }); // Updated message
-                return;
-            }
-
-            foodEntryToSave = {
-                id: Date.now().toString(), // Simple unique ID
-                mealType: selectedMealType,
-                foodName: customFoodName.trim(),
-                quantity: q,
-                unit: customUnit.trim(),
-                calories: Math.round(calsPerUnit * q),
-                protein: Math.round(protPerUnit * q * 10) / 10,
-                carbs: Math.round(carbsPerUnit * q * 10) / 10,
-                fat: Math.round(fatPerUnit * q * 10) / 10,
-                fibre: Math.round(fibrePerUnit * q * 10) / 10, // Include fibre
-                imageUrl: 'https://placehold.co/40x40/cccccc/333333?text=🍽️' // Default image for custom items
-            };
-        }
-
-        // Update the logged meals state
-        setLoggedMeals(prevMeals => {
-            const mealsForDate = prevMeals[currentDate] ? [...prevMeals[currentDate]] : [];
-            if (editingMealId) {
-                // Find and replace the item being edited
-                const index = mealsForDate.findIndex(meal => meal.id === editingMealId);
-                if (index !== -1 && foodEntryToSave) { // Ensure foodEntryToSave is not null
-                    mealsForDate[index] = foodEntryToSave;
-                }
-            } else {
-                // Add a new item
-                if (foodEntryToSave) { // Ensure foodEntryToSave is not null
-                    mealsForDate.push(foodEntryToSave);
-                }
-            }
-            return { ...prevMeals, [currentDate]: mealsForDate };
+            return updatedMeals;
         });
-
-        // Close modal and reset modal states
-        closeModal(); // Use the new closeModal function
+        setEditingMealId(null); // Reset editingMealId after save
     };
 
     const handleDeleteFood = (mealId: string) => { // mealId is a string
@@ -474,37 +364,40 @@ function App(): JSX.Element {
     };
 
     // Function to handle opening the modal for editing
-    const openEditModal = (meal: LoggedFoodItem) => { // meal is a LoggedFoodItem
-        console.log('openEditModal called for meal:', meal); // Debugging log
-        // Set modal states based on the meal being edited
+    const openEditModal = (meal: LoggedFoodItem) => {
+        console.log('openEditModal called for meal:', meal);
         setSelectedMealType(meal.mealType);
-        setQuantity(meal.quantity); // Quantity is the logged quantity
-        setEditingMealId(meal.id); // Set the ID of the item being edited
-        setCopyingMeal(null); // Ensure copying state is off
+        setQuantity(meal.quantity);
+        setEditingMealId(meal.id);
+        setCopyingMeal(null);
         setModalMessage({ text: '', type: '' });
-        setSearchTerm(''); // Clear search term initially in edit mode
-        setSearchResults([]); // Clear search results initially
+        setSearchTerm(''); // Clear search term when editing
+        setSearchResults([]);
 
-        // Populate custom food states for editing (calculate per-unit values from logged totals)
+        // Populate custom fields with per-unit values from the meal being edited
+        const quantityLogged = meal.quantity > 0 ? meal.quantity : 1;
         setCustomFoodName(meal.foodName);
-        setCustomUnit(meal.unit); // Use the unit from the logged entry
+        setCustomUnit(meal.unit);
+        setCustomCalories(meal.calories / quantityLogged);
+        setCustomProtein(meal.protein / quantityLogged);
+        setCustomCarbs(meal.carbs / quantityLogged);
+        setCustomFat(meal.fat / quantityLogged);
+        setCustomFibre((meal.fibre || 0) / quantityLogged);
 
-        // --- FIX: Calculate per-unit values with full precision ---
-        // Only calculate if quantity is greater than 0 to avoid division by zero
-        const quantityLogged = meal.quantity > 0 ? meal.quantity : 1; // Use 1 to avoid division by zero if quantity is 0
-
-        setCustomCalories(meal.calories / quantityLogged); // Store full precision
-        setCustomProtein(meal.protein / quantityLogged); // Store full precision
-        setCustomCarbs(meal.carbs / quantityLogged);   // Store full precision
-        setCustomFat(meal.fat / quantityLogged);     // Store full precision
-        setCustomFibre((meal.fibre || 0) / quantityLogged); // Store full precision, handle optional fibre
-
-
-        // In edit mode, we are always treating the input as custom, so no need to pre-select from database
-        setSelectedFoodForModal(null);
-
+        // Populate selectedFoodForModal to carry over original details like imageUrl
+        // This makes the original imageUrl available in FoodModal via selectedFoodForModal.imageUrl
+        setSelectedFoodForModal({
+            name: meal.foodName, // Map LoggedFoodItem.foodName to FoodItem-like .name
+            unit: meal.unit,
+            // Per-unit values for consistency (though modal primarily uses customXYZ states for inputs)
+            calories: meal.calories / quantityLogged,
+            protein: meal.protein / quantityLogged,
+            carbs: meal.carbs / quantityLogged,
+            fat: meal.fat / quantityLogged,
+            fibre: (meal.fibre || 0) / quantityLogged,
+            imageUrl: meal.imageUrl, // Preserve the original imageUrl
+        });
         setShowModal(true);
-        console.log('showModal set to true for editing.'); // Debugging log
     };
 
     // Function to handle opening the modal for copying
@@ -729,6 +622,27 @@ function App(): JSX.Element {
     // Helper: Get next 7 days (including today)
     const next7Days = Array.from({ length: 7 }, (_, i) => addDays(getToday(), i));
 
+    async function fetchMeals(user: User, date: string) {
+        const docRef = doc(db, "users", user.uid, "meals", date);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data().meals || [];
+        }
+        return [];
+    }
+
+    async function saveMeals(user: User, date: string, mealsForDate: LoggedFoodItem[]) {
+        const docRef = doc(db, "users", user.uid, "meals", date);
+        await setDoc(docRef, { meals: mealsForDate });
+    }
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen">
+                <GoogleAuthButton />
+            </div>
+        );
+    }
     // JSX structure using React.createElement (as in your original stub)
     return (
         // Outer container: Added mx-auto for horizontal centering on larger screens

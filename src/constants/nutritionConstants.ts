@@ -1,6 +1,6 @@
 import type { FoodItem, MealType } from '../types/types';
 
-export const MEAL_TYPES: MealType[] = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
+export const MEAL_TYPES: MealType[] = ["Breakfast", "Lunch", "Dinner", "Snacks"];
 
 export const TARGET_CALORIES = 2200;
 export const TARGET_PROTEIN = 137.5;

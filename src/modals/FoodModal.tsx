@@ -1,14 +1,14 @@
 import React, { Fragment } from 'react';
 import { SearchIcon, LoaderIcon } from '../components/Icons';
-import type { MealType } from '../types/types';
+import type { LoggedFoodItem, MealType } from '../types/types';
 
 type FoodModalProps = {
     show: boolean;
     getModalTitle: () => string;
     modalMessage: { text: string; type: string };
-    selectedMealType: string;
+    selectedMealType: MealType;
     setSelectedMealType: (type: MealType) => void;
-    MEAL_TYPES: string[];
+    MEAL_TYPES: MealType[];
     editingMealId: string | null;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
@@ -43,6 +43,7 @@ type FoodModalProps = {
         fat: number;
         fibre?: number;
         imageUrl?: string;
+        foodName?: string;
     } | null;
     showCustomFoodInputs: boolean;
     customFoodName: string;
@@ -63,7 +64,7 @@ type FoodModalProps = {
     setQuantity: (val: string) => void;
     getQuantityLabel: () => string;
     calculatedNutrients: { calories: number; protein: number; carbs: number; fat: number; fibre: number };
-    handleSaveFoodEntry: () => void;
+    handleSaveFoodEntry: (mealType: MealType, foodData: LoggedFoodItem) => void;
     closeModal: () => void;
     MEAL_SUGGESTIONS: Record<string, string[]>;
 };
@@ -359,7 +360,65 @@ const FoodModal: React.FC<FoodModalProps> = ({
                 </div>
                 <div className="flex gap-2 mt-4 flex-shrink-0">
                     <button
-                        onClick={handleSaveFoodEntry}
+                        onClick={() => {
+                            let foodDataToSave: LoggedFoodItem;
+
+                            if (editingMealId) {
+                                // EDITING an existing item
+                                foodDataToSave = {
+                                    id: editingMealId, // Use the existing ID
+                                    mealType: selectedMealType,
+                                    foodName: customFoodName, // Custom fields are populated by openEditModal
+                                    quantity: Number(quantity),
+                                    unit: customUnit,         // Custom fields are populated by openEditModal
+                                    calories: calculatedNutrients.calories, // Use total calculated nutrients
+                                    protein: calculatedNutrients.protein,
+                                    carbs: calculatedNutrients.carbs,
+                                    fat: calculatedNutrients.fat,
+                                    fibre: calculatedNutrients.fibre,
+                                    // Decide how to handle imageUrl for edited items.
+                                    // For now, if it's treated as a custom edit, imageUrl might be undefined
+                                    // or you could try to preserve it if the original item had one and customFoodName hasn't changed significantly.
+                                    // Simplest for now:
+                                    imageUrl: selectedFoodForModal?.imageUrl,
+                                };
+                            } else {
+                                // ADDING a new item
+                                if (selectedFoodForModal) {
+                                    // Adding a new item selected from search results
+                                    foodDataToSave = {
+                                        id: Date.now().toString() + Math.random().toString(36).slice(2, 8), // New ID
+                                        mealType: selectedMealType,
+                                        foodName: selectedFoodForModal.name,
+                                        quantity: Number(quantity),
+                                        unit: selectedFoodForModal.unit,
+                                        calories: calculatedNutrients.calories, // Use total calculated nutrients
+                                        protein: calculatedNutrients.protein,
+                                        carbs: calculatedNutrients.carbs,
+                                        fat: calculatedNutrients.fat,
+                                        fibre: calculatedNutrients.fibre,
+                                        imageUrl: selectedFoodForModal.imageUrl,
+                                    };
+                                } else {
+                                    // Adding a new custom item
+                                    foodDataToSave = {
+                                        id: Date.now().toString() + Math.random().toString(36).slice(2, 8), // New ID
+                                        mealType: selectedMealType,
+                                        foodName: customFoodName,
+                                        quantity: Number(quantity),
+                                        unit: customUnit,
+                                        calories: calculatedNutrients.calories, // Use total calculated nutrients
+                                        protein: calculatedNutrients.protein,
+                                        carbs: calculatedNutrients.carbs,
+                                        fat: calculatedNutrients.fat,
+                                        fibre: calculatedNutrients.fibre,
+                                        imageUrl: undefined, // Custom items typically don't have an image URL
+                                    };
+                                }
+                            }
+                            handleSaveFoodEntry(selectedMealType, foodDataToSave);
+                            closeModal();
+                        }}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
                     >
                         {editingMealId ? 'Save Changes' : 'Add Food'}
@@ -372,7 +431,7 @@ const FoodModal: React.FC<FoodModalProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
