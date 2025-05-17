@@ -3,7 +3,7 @@ import type { JSX } from 'react/jsx-dev-runtime';
 
 // --- Import Type Definitions and Constants ---
 // Assuming types are in a 'types.ts' file or similar
-import type { FoodItem, LoggedFoodItem, MealType, LoggedMeals, ModalMessage } from './types'; // Assuming types are in a 'types.ts' file
+import type { FoodItem, LoggedFoodItem, MealType, LoggedMeals, ModalMessage } from './types/types'; // Assuming types are in a 'types.ts' file
 // Import constants from constants/index.ts
 import {
     MEAL_TYPES,
@@ -14,14 +14,14 @@ import {
     TARGET_CARBS,
     TARGET_FAT,
     TARGET_FIBRE,
-} from './constants/index'; // Import constants from index.ts
+} from './constants/nutritionConstants'; // Import constants from index.ts
 
 // Import utility functions from utils.ts
-import { getToday, formatDate, addDays } from './utils'; // Import utility functions
+import { getToday, formatDate, addDays } from './utils/dateUtils'; // Import utility functions
 
 // Assuming searchFoodDatabase is also in utils.ts and handles suggestions when query is empty
 // If searchFoodDatabase is defined differently in your utils.ts, you might need to adjust this import or the function call below.
-import { searchFoodDatabase as searchFoodDatabaseUtil } from './utils';
+import { searchFoodDatabase as searchFoodDatabaseUtil } from './utils/dateUtils';
 
 
 // --- Import Components ---
@@ -550,13 +550,14 @@ function App(): JSX.Element {
         const newDate = addDays(currentDate, offset);
         const today = getToday();
         const sevenDaysAgo = addDays(today, -6);
-
+        console.log(`changeDate called with offset: ${offset}. Current date: ${currentDate}. Calculated new date: ${newDate}. Today: ${today}. Seven days ago: ${sevenDaysAgo}`); // Debugging log
         // Prevent navigating beyond today or before the 7-day history window
         if (newDate > today || newDate < sevenDaysAgo) {
+            console.log('Navigation blocked: new date is outside allowed range.'); // Debugging log
             // Optionally show a message or just do nothing
             return;
         }
-
+        console.log('Setting current date to:', newDate); // Debugging log
         setCurrentDate(newDate);
     };
 
@@ -766,7 +767,7 @@ function App(): JSX.Element {
                         ),
                         React.createElement('button', {
                             onClick: () => changeDate(1),
-                            disabled: isToday, // Disable if on today's date
+                            disabled: new Date(currentDate) >= new Date(getToday()), // Disable if current date is today or in the future
                             className: 'p-2 md:p-3 bg-green-500 text-white rounded-full hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-400' // Responsive padding
                         }, React.createElement(ChevronRight)
                         )
@@ -891,15 +892,15 @@ function App(): JSX.Element {
                         daysOfWeek.map(day => React.createElement('div', { key: day, className: 'font-medium text-gray-600' }, day))
                     ),
                     React.createElement('div', { className: 'grid grid-cols-7 gap-1 text-center text-sm md:text-base' }, // Responsive text size
-                        getCalendarDays().map(({ date, display, isCurrent, isPast }) =>
+                        getCalendarDays().map(({ date, display, isCurrent }) =>
                             // MODIFIED: Removed dark mode colors
                             React.createElement('button', {
                                 key: date,
                                 onClick: () => handleDateSelect(date),
-                                disabled: !isPast && date !== getToday(), // Disable future dates (beyond today)
+                                disabled: new Date(date) > new Date(getToday()), // Disable future dates (beyond today)
                                 className: `p-2 rounded-full transition-colors w-full aspect-square flex items-center justify-center
                                             ${isCurrent ? 'bg-green-600 text-white font-bold' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
-                                            ${!isPast && date !== getToday() ? 'disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed' : ''}
+                                            ${new Date(date) > new Date(getToday()) ? 'disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed' : ''}
                                             focus:outline-none focus:ring-2 focus:ring-green-400`
                             }, display)
                         )
@@ -929,7 +930,7 @@ function App(): JSX.Element {
                             React.createElement('tbody', null,
                                 last7Days.map((date, idx) =>
                                     React.createElement('tr', { key: date },
-                                        React.createElement('td', { className: 'pr-2 py-1 text-right' },
+                                        React.createElement('td', { className: 'pr-2 py-1 text-left' },
                                             new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
                                         ),
                                         React.createElement('td', { className: 'pl-2 py-1 font-semibold text-right' },

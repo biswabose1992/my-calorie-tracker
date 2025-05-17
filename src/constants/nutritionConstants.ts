@@ -1,4 +1,4 @@
-import type { FoodItem, MealType } from '../types';
+import type { FoodItem, MealType } from '../types/types';
 
 export const MEAL_TYPES: MealType[] = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
 
@@ -29,11 +29,11 @@ export const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
   // --- Added and Updated Food Items (Based on Images) ---
   // Myprotein Impact Whey Protein (Updated from image: 1 scoop | 130 kcal, P: 25g, C: 3g, F: 2g)
   'Myprotein Impact Whey Protein (1 scoop)': { name: 'Myprotein Impact Whey Protein (1 scoop)', unit: 'scoop', calories: 130, protein: 25, carbs: 3, fat: 2, fibre: 0.3, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥛' }, // Added estimated fibre
-  'Lean cookie' : { name: 'Lean cookie', unit: 'piece', calories: 190, protein: 25, carbs: 14, fat: 3.6, fibre: 1.5, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🍪' }, // From image
+  'Lean cookie': { name: 'Lean cookie', unit: 'piece', calories: 190, protein: 25, carbs: 14, fat: 3.6, fibre: 1.5, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🍪' }, // From image
   // Chicken Breast (raw) (Updated from image: 150 gm | 192 kcal, P:39g, C:0g, F:3g -> per 100g)
   'Chicken Breast (raw)': { name: 'Chicken Breast (raw)', unit: '100g', calories: 128, protein: 26, carbs: 0, fat: 2, fibre: 0, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍗' },
   // White Rice (raw) (Updated from image: "rice/poha/oats..." 50 gm | 168 kcal, P:4g, C:38g, F:0g -> per 100g)
-   'White Rice (raw)': { name: 'White Rice (raw)', unit: '100g', calories: 336, protein: 8, carbs: 76, fat: 0, fibre: 1, imageUrl: 'https://placehold.co/40x40/d1d5db/4b5563?text=🍚' }, // Added estimated fibre
+  'White Rice (raw)': { name: 'White Rice (raw)', unit: '100g', calories: 336, protein: 8, carbs: 76, fat: 0, fibre: 1, imageUrl: 'https://placehold.co/40x40/d1d5db/4b5563?text=🍚' }, // Added estimated fibre
   // Indian Dal Fry (cooked) (Updated from image: 150 gm | 150 kcal, P: 7.5g, C: 21g, F: 4.5g -> per 100g)
   'Indian Dal Fry (cooked)': { name: 'Indian Dal Fry (cooked)', unit: '100g', calories: 100, protein: 5, carbs: 14, fat: 3, fibre: 3, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🍲' }, // Converted and added estimated fibre
   // Mejdool Dates (raw) (Matches previous values)
@@ -41,19 +41,19 @@ export const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
   // Curd (Updated from image: 100 gm | 62 kcal, P: 4g, C: 4.4g, F: 3.1g)
   'Curd': { name: 'Curd', unit: '100g', calories: 62, protein: 4, carbs: 4.4, fat: 3.1, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥣' },
   // Oats (raw) (Updated from image: "rice/poha/oats..." 50 gm | 168 kcal, P:4g, C:38g, F:0g -> per 100g, changed to raw)
-   'Oats (raw)': { name: 'Oats (raw)', unit: '100g', calories: 336, protein: 8, carbs: 76, fat: 0, fibre: 10, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🥣' }, // Added estimated fibre for raw oats
-   // New items from images
-   'Omega 3': { name: 'Omega 3', unit: 'softgel', calories: 9, protein: 0, carbs: 0, fat: 1, fibre: 0, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=💊' }, // From image
-   'Multivitamin': { name: 'Multivitamin', unit: 'piece', calories: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=💊' }, // From image
-   'Ghee/Butter/Coconut Oil Blend': { name: 'Ghee/Butter/Coconut Oil Blend', unit: '5ml', calories: 45, protein: 0, carbs: 0, fat: 5, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🧈' }, // From image
+  'Oats (raw)': { name: 'Oats (raw)', unit: '100g', calories: 336, protein: 8, carbs: 76, fat: 0, fibre: 10, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🥣' }, // Added estimated fibre for raw oats
+  // New items from images
+  'Omega 3': { name: 'Omega 3', unit: 'softgel', calories: 9, protein: 0, carbs: 0, fat: 1, fibre: 0, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=💊' }, // From image
+  'Multivitamin': { name: 'Multivitamin', unit: 'piece', calories: 0, protein: 0, carbs: 0, fat: 0, fibre: 0, imageUrl: 'https://placehold.co/40x40/a8f3b0/065f46?text=💊' }, // From image
+  'Ghee/Butter/Coconut Oil Blend': { name: 'Ghee/Butter/Coconut Oil Blend', unit: '5ml', calories: 45, protein: 0, carbs: 0, fat: 5, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🧈' }, // From image
 };
 
- // --- Meal Specific Suggestions Mapping ---
+// --- Meal Specific Suggestions Mapping ---
 // Map meal types to a list of food names to suggest initially
 // Updated to remove the removed items
 export const MEAL_SUGGESTIONS: { [key in MealType]: string[] } = {
-    'Breakfast': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Curd',  'Multivitamin', 'Omega 3'], // Removed Almonds
-    'Lunch': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend'], // Removed Spinach
-    'Snacks': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Mejdool Dates (raw)', 'Lean cookie'], // Removed Almonds
-    'Dinner': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)',  'Curd', 'Ghee/Butter/Coconut Oil Blend', 'Mejdool Dates (raw)'], // Removed Spinach
+  'Breakfast': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Curd', 'Multivitamin', 'Omega 3'], // Removed Almonds
+  'Lunch': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend'], // Removed Spinach
+  'Snacks': ['Myprotein Impact Whey Protein (1 scoop)', 'Apple (raw)', 'Banana (raw)', 'Mejdool Dates (raw)', 'Lean cookie'], // Removed Almonds
+  'Dinner': ['White Rice (raw)', 'Chicken Breast (raw)', 'Indian Dal Fry (cooked)', 'Carrot (raw)', 'Curd', 'Ghee/Butter/Coconut Oil Blend', 'Mejdool Dates (raw)'], // Removed Spinach
 };
