@@ -184,31 +184,21 @@ function App(): JSX.Element {
 
         // Only perform search/suggestions if we are adding or copying (not editing)
         if (editingMealId === null) {
-             if (!query) {
-                 // If search term is empty, load meal-specific suggestions
-                 setIsLoadingSearch(true);
-                 console.log(`Search term is empty, fetching suggestions for meal type: ${selectedMealType}`); // Debugging log
-                try {
-    const results = searchFoodDatabaseUtil('', DETAILED_FOOD_DATABASE);
-    setSearchResults(results);
+if (!query) {
+    // If search term is empty, DO NOT show any search results (just suggestions in UI)
+    setSearchResults([]);
     setIsLoadingSearch(false);
-} catch  {
-    setIsLoadingSearch(false);
-    setModalMessage({ text: 'Error fetching suggestions.', type: 'error' });
+    setSelectedFoodForModal(null);
+    // Clear custom fields when search term is empty
+    setCustomFoodName('');
+    setCustomCalories('');
+    setCustomProtein('');
+    setCustomCarbs('');
+    setCustomFat('');
+    setCustomFibre('');
+    setCustomUnit('g');
+    return;
 }
-
-
-                 setSelectedFoodForModal(null); // Clear selected food when search term is empty
-                 // Clear custom fields when search term is empty
-                 setCustomFoodName('');
-                 setCustomCalories('');
-                 setCustomProtein('');
-                 setCustomCarbs('');
-                 setCustomFat('');
-                 setCustomFibre('');
-                 setCustomUnit('g'); // Reset custom unit to 'g'
-                 return;
-             }
 
              // If search term is not empty, perform standard search
              setIsLoadingSearch(true);
@@ -1098,7 +1088,7 @@ try {
                         ) : null, // Hide search when editing
 
                         // Search Results / Loader / No Results / Suggestions (Show only when adding and search term is present or empty)
-                        !editingMealId && (searchTerm.trim() || searchResults.length > 0 || isLoadingSearch) && ( // Show this section if adding and search is active or suggestions are loaded
+                        !editingMealId && ( // Show this section if adding and search is active or suggestions are loaded
                              React.createElement('div', { className: 'mb-4' }, // Removed fixed height and overflow here, handled by parent
                                 // MODIFIED: Removed dark mode text color
                                 isLoadingSearch && React.createElement('div', { className: 'flex justify-center items-center p-4' }, React.createElement(LoaderIcon, { className: 'text-green-500 w-8 h-8 animate-spin' }), React.createElement('span', {className: 'ml-2 text-gray-600 text-sm transition-colors'}, 'Searching...')), // Responsive text size, Added transition
