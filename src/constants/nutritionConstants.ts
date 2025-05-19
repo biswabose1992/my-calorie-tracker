@@ -21,7 +21,7 @@ export const DETAILED_FOOD_DATABASE: { [key: string]: FoodItem } = {
   'Strawberries (raw)': { name: 'Strawberries (raw)', unit: '100g', calories: 33, protein: 0.7, carbs: 7.7, fat: 0.3, fibre: 2, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🍓' },
   'Carrot (raw)': { name: 'Carrot (raw)', unit: '100g', calories: 41, protein: 0.9, carbs: 9.6, fat: 0.2, fibre: 2.8, imageUrl: 'https://placehold.co/40x40/fed7aa/ea580c?text=🥕' },
   'Milk (whole, raw)': { name: 'Milk (whole, raw)', unit: '100g', calories: 61, protein: 3.3, carbs: 4.7, fat: 3.3, fibre: 0, imageUrl: 'https://placehold.co/40x40/bfdbfe/172554?text=🥛' }, // Using g for consistency, ~100ml
-  'Egg (raw)': { name: 'Egg (raw)', unit: '100g', calories: 155, protein: 12.6, carbs: 1.1, fat: 10.6, fibre: 0, imageUrl: 'https://placehold.co/40x40/fef9c3/b45309?text=🥚' }, // Approx 2 large eggs
+  "Egg (raw)": { name: "Egg (raw)", unit: "piece", calories: 69, protein: 6, carbs: 0, fat: 5, fibre: 0, imageUrl: "https://placehold.co/40x40/fef9c3/b45309?text=🥚" },
   'Olive Oil (raw)': { name: 'Olive Oil (raw)', unit: '100g', calories: 884, protein: 0, carbs: 0, fat: 100, fibre: 0, imageUrl: 'https://placehold.co/40x40/d9f991/3f6212?text=🍾' }, // 100g oil = ~109ml
   'Veggies (mixed)': { name: 'Veggies (mixed)', unit: '100g', calories: 40, protein: 0, carbs: 10, fat: 0, fibre: 2.8, imageUrl: 'https://placehold.co/40x40/fecaca/9f1239?text=🥗' }, // Mixed veggies
 
